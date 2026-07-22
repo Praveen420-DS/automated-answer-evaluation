@@ -1,0 +1,1 @@
+import StudentLayout from '../../layouts/StudentLayout'; import MarksTable from '../../components/Reports/MarksTable'; export default function MyMarks(){return <StudentLayout><section className="page"><h1>My marks</h1><MarksTable rows={[]}/></section></StudentLayout>}

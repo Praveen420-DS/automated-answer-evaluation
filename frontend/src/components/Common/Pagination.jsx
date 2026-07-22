@@ -1,0 +1,1 @@
+export default function Pagination({ page=1, total=1, onChange=()=>{} }) { return <nav><button onClick={() => onChange(page-1)} disabled={page<=1}>Previous</button> {page} / {total} <button onClick={() => onChange(page+1)} disabled={page>=total}>Next</button></nav>; }

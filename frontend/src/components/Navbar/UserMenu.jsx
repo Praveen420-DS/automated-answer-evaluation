@@ -1,0 +1,1 @@
+import { Link } from 'react-router-dom'; import useAuth from '../../hooks/useAuth'; export default function UserMenu(){ const {user, logout}=useAuth(); return user ? <button onClick={logout}>Sign out</button> : <Link to="/login">Sign in</Link>; }

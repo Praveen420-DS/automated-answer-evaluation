@@ -1,0 +1,1 @@
+export default function QuestionTabs({ questions=[], active=0, onChange=()=>{} }) { return <div>{questions.map((q,i)=><button key={i} onClick={()=>onChange(i)} aria-pressed={i===active}>Q{i+1}</button>)}</div>; }

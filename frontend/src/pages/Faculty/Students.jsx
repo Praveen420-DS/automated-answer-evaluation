@@ -1,0 +1,1 @@
+import FacultyLayout from '../../layouts/FacultyLayout'; import SearchBar from '../../components/Common/SearchBar'; export default function Students(){return <FacultyLayout><section className="page"><h1>Students</h1><SearchBar/></section></FacultyLayout>}

@@ -1,0 +1,1 @@
+import FacultyLayout from '../../layouts/FacultyLayout'; import MarksTable from '../../components/Reports/MarksTable'; export default function MarksMatrix(){return <FacultyLayout><section className="page"><h1>Marks matrix</h1><MarksTable rows={[]}/></section></FacultyLayout>}

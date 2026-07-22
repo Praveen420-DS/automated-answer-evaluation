@@ -1,0 +1,1 @@
+import StudentLayout from '../../layouts/StudentLayout'; import TranscriptViewer from '../../components/Student/TranscriptViewer'; export default function Transcript(){return <StudentLayout><section className="page"><h1>Transcript</h1><TranscriptViewer/></section></StudentLayout>}

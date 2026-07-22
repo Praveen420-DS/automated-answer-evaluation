@@ -1,0 +1,1 @@
+import FacultyLayout from '../../layouts/FacultyLayout'; import DownloadCard from '../../components/Reports/DownloadCard'; export default function Reports(){return <FacultyLayout><section className="page"><h1>Reports</h1><DownloadCard/></section></FacultyLayout>}

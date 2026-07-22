@@ -1,0 +1,1 @@
+import FacultyLayout from '../../layouts/FacultyLayout'; import OCRPreview from '../../components/Evaluation/OCRPreview'; export default function EvaluateAnswerSheet(){return <FacultyLayout><section className="page"><h1>Evaluate answer sheet</h1><OCRPreview/></section></FacultyLayout>}

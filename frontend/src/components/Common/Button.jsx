@@ -1,0 +1,1 @@
+export default function Button({ children, ...props }) { return <button {...props} style={{background:'#4f46e5', color:'white', border:0, borderRadius:8, padding:'.65rem 1rem', cursor:'pointer', ...props.style}}>{children}</button>; }

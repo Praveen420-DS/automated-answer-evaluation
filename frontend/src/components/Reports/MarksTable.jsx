@@ -1,0 +1,1 @@
+export default function MarksTable({ rows=[] }) { return <table className="card"><thead><tr><th>Student</th><th>Marks</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{r.name}</td><td>{r.marks}</td></tr>)}</tbody></table>; }

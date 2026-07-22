@@ -1,0 +1,1 @@
+import AuthLayout from '../../layouts/AuthLayout'; import Button from '../../components/Common/Button'; import Input from '../../components/Common/Input'; export default function ForgotPassword(){return <AuthLayout><form className="card field"><h1>Reset password</h1><Input type="email" placeholder="Email address"/><Button>Send reset link</Button></form></AuthLayout>}

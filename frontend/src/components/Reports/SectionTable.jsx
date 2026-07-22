@@ -1,0 +1,1 @@
+export default function SectionTable({ rows=[] }) { return <table className="card"><thead><tr><th>Section</th><th>Score</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{r.name}</td><td>{r.score}</td></tr>)}</tbody></table>; }

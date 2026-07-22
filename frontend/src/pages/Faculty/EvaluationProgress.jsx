@@ -1,0 +1,1 @@
+import FacultyLayout from '../../layouts/FacultyLayout'; import UploadProgress from '../../components/Upload/UploadProgress'; export default function EvaluationProgress(){return <FacultyLayout><section className="page"><h1>Evaluation progress</h1><UploadProgress/></section></FacultyLayout>}

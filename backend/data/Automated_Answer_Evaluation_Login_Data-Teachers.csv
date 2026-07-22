@@ -1,0 +1,21 @@
+Teacher ID,Name,Email,Password,Department,Designation,Subject,Status
+TCH001,Teacher 1,teacher001@evalai.com,Teacher@123,AI & DS,Assistant Professor,Machine Learning,Active
+TCH002,Teacher 2,teacher002@evalai.com,Teacher@123,CSE,Assistant Professor,AI,Active
+TCH003,Teacher 3,teacher003@evalai.com,Teacher@123,IT,Assistant Professor,Python,Active
+TCH004,Teacher 4,teacher004@evalai.com,Teacher@123,ECE,Assistant Professor,DBMS,Active
+TCH005,Teacher 5,teacher005@evalai.com,Teacher@123,EEE,Assistant Professor,Data Science,Active
+TCH006,Teacher 6,teacher006@evalai.com,Teacher@123,AI & DS,Assistant Professor,Machine Learning,Active
+TCH007,Teacher 7,teacher007@evalai.com,Teacher@123,CSE,Assistant Professor,AI,Active
+TCH008,Teacher 8,teacher008@evalai.com,Teacher@123,IT,Assistant Professor,Python,Active
+TCH009,Teacher 9,teacher009@evalai.com,Teacher@123,ECE,Assistant Professor,DBMS,Active
+TCH010,Teacher 10,teacher010@evalai.com,Teacher@123,EEE,Assistant Professor,Data Science,Active
+TCH011,Teacher 11,teacher011@evalai.com,Teacher@123,AI & DS,Assistant Professor,Machine Learning,Active
+TCH012,Teacher 12,teacher012@evalai.com,Teacher@123,CSE,Assistant Professor,AI,Active
+TCH013,Teacher 13,teacher013@evalai.com,Teacher@123,IT,Assistant Professor,Python,Active
+TCH014,Teacher 14,teacher014@evalai.com,Teacher@123,ECE,Assistant Professor,DBMS,Active
+TCH015,Teacher 15,teacher015@evalai.com,Teacher@123,EEE,Assistant Professor,Data Science,Active
+TCH016,Teacher 16,teacher016@evalai.com,Teacher@123,AI & DS,Assistant Professor,Machine Learning,Active
+TCH017,Teacher 17,teacher017@evalai.com,Teacher@123,CSE,Assistant Professor,AI,Active
+TCH018,Teacher 18,teacher018@evalai.com,Teacher@123,IT,Assistant Professor,Python,Active
+TCH019,Teacher 19,teacher019@evalai.com,Teacher@123,ECE,Assistant Professor,DBMS,Active
+TCH020,Teacher 20,teacher020@evalai.com,Teacher@123,EEE,Assistant Professor,Data Science,Active

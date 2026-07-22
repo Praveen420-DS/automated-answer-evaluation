@@ -1,0 +1,1 @@
+import MainLayout from './MainLayout'; import FacultySidebar from '../components/Sidebar/FacultySidebar'; export default function FacultyLayout({ children }) { return <MainLayout><FacultySidebar />{children}</MainLayout>; }

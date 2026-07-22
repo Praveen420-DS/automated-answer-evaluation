@@ -1,0 +1,1 @@
+export default function RecentExamTable({ exams=[] }) { return <div className="card"><h3>Recent exams</h3>{exams.length ? <table><tbody>{exams.map(e=><tr key={e.id}><td>{e.name}</td><td>{e.status}</td></tr>)}</tbody></table> : <p className="muted">No exams yet.</p>}</div>; }
