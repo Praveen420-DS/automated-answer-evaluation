@@ -17,5 +17,5 @@ __pycache__/
 
 *.log
 
-# PaddleOCR, PaddleX, PaddlePaddle, and Hugging Face runtime caches
+# PaddleOCR, PaddleX, and Hugging Face runtime caches
 .runtime_home/

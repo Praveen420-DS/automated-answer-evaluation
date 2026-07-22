@@ -5,7 +5,11 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from app.evaluation.deterministic_evaluator import evaluate_answers
 from app.feedback.feedback_generator import generate_feedback
 from app.ocr.extractor import extract_document
-from app.ocr.input_handler import InputValidationError, cleanup_path, save_upload_file
+from app.ocr.input_handler import (
+    InputValidationError,
+    cleanup_path,
+    save_upload_file,
+)
 from app.parser.answer_parser import parse_ocr_result
 
 
