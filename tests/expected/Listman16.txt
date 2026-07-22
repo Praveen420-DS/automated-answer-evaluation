@@ -1,0 +1,11 @@
+﻿Function array_manipulation(L1, L2):
+    L3 = []
+    L3 = L1 + L2
+    result = []
+
+    for ele in L3:
+        if ele not in result:
+            result.append(L3)
+        else:
+            continue
+    return result.sort()

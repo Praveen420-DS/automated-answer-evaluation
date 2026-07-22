@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+paddleocr
+paddlepaddle
+opencv-python
+pillow
+google-genai
+sentence-transformers
+sqlalchemy

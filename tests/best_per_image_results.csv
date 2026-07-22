@@ -1,0 +1,8 @@
+Image,Best_Preprocessing,Best_PSM,Similarity_Percentage
+Closest10,Otsu,6,7.58
+Closest12,Adaptive,11,11.05
+Closest13,Otsu,6,4.46
+Listman15,Otsu,11,39.55
+Listman16,Original,6,22.22
+Listman17,CLAHE,6,18.69
+Listman2,CLAHE,6,21.88

@@ -16,3 +16,6 @@ __pycache__/
 .idea/
 
 *.log
+
+# PaddleOCR, PaddleX, and Hugging Face runtime caches
+.runtime_home/
