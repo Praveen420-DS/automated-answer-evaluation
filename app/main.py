@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+<<<<<<< HEAD
 from pydantic import BaseModel
 
 from app.schemas import (
@@ -16,10 +17,20 @@ from app.core.evaluator import evaluate_answer
 app = FastAPI(
     title="Automated Answer Evaluation API",
     description="AI Powered Automated Answer Evaluation System",
+=======
+
+from app.api.routes import router
+
+
+app = FastAPI(
+    title="Automated Answer Script Evaluation API",
+    description="Backend API for automated answer sheet processing",
+>>>>>>> backend-integration
     version="1.0.0"
 )
 
 
+<<<<<<< HEAD
 # ---------------------------------------
 # Request Model
 # ---------------------------------------
@@ -130,3 +141,20 @@ def auto_evaluate(request: AutoEvaluationRequest):
     print("Evaluation Completed")
 
     return result
+=======
+app.include_router(router)
+
+
+@app.get("/")
+def root():
+    return {
+        "message": "Automated Answer Evaluation API is running"
+    }
+
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "healthy"
+    }
+>>>>>>> backend-integration

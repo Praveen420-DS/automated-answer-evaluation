@@ -1,0 +1,23 @@
+﻿def prgm(array[], target):
+    list = []
+
+    for i in array:
+        list.append(array[i]) 
+
+    list = list.set()
+
+    for i in range(len(list)):
+
+        if list[i] == target:
+            return target
+
+        elif list[i] > target:
+            return list[i]
+
+        else:
+            for i in range(len(list)):
+                minimum = min(target - list[i], target - list[i + 1])
+
+            for i in range(len(list)):
+                if (target - list[i] == minimum):
+                    return list[i]

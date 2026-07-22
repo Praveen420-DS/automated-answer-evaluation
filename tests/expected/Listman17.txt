@@ -1,0 +1,17 @@
+﻿list1 = [3, 1, 4, 1, 5, 9]
+list2 = [2,6, 5, 3, 5]
+
+def merge(list1, list2):
+    list3 = []
+    
+    for i in list1:
+        if i not in list3:
+            list3.append[i]
+    
+    for j in list2:
+        if j not in list3:
+            list3.append[j]
+    return list3
+
+print("Merged list in ascending order:")
+print(list3.sort())

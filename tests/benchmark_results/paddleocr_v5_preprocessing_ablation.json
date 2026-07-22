@@ -1,0 +1,821 @@
+{
+  "pipeline": {
+    "ocr_model": "PP-OCRv5_server_det + PP-OCRv5_server_rec",
+    "device": "cpu"
+  },
+  "image_count": 7,
+  "configurations": {
+    "original": {
+      "per_image": [
+        {
+          "image": "Closest10.JPEG",
+          "ground_truth": "Closest10.txt",
+          "character_similarity": 0.126514131897712,
+          "token_similarity": 0.1095890410958904,
+          "overall_similarity": 0.12143660465716552,
+          "mean_confidence": 0.7768203553400541,
+          "min_confidence": 0.5421262383460999,
+          "max_confidence": 0.9143128991127014,
+          "ocr_block_count": 19,
+          "ocr_character_count": 386
+        },
+        {
+          "image": "Closest12.JPEG",
+          "ground_truth": "Closest12.txt",
+          "character_similarity": 0.155955441302485,
+          "token_similarity": 0.078125,
+          "overall_similarity": 0.1326063089117395,
+          "mean_confidence": 0.7426345067865708,
+          "min_confidence": 0.40086793899536133,
+          "max_confidence": 0.9886864423751831,
+          "ocr_block_count": 34,
+          "ocr_character_count": 528
+        },
+        {
+          "image": "Closest13.JPEG",
+          "ground_truth": "Closest13.txt",
+          "character_similarity": 0.0917941585535466,
+          "token_similarity": 0.0375,
+          "overall_similarity": 0.0755059109874826,
+          "mean_confidence": 0.6494873384279864,
+          "min_confidence": 0.17422692477703094,
+          "max_confidence": 0.979450523853302,
+          "ocr_block_count": 28,
+          "ocr_character_count": 305
+        },
+        {
+          "image": "Listman15.JPEG",
+          "ground_truth": "Listman15.txt",
+          "character_similarity": 0.1443850267379679,
+          "token_similarity": 0.0,
+          "overall_similarity": 0.10106951871657753,
+          "mean_confidence": 0.5788047254085541,
+          "min_confidence": 0.32357072830200195,
+          "max_confidence": 0.9362436532974243,
+          "ocr_block_count": 25,
+          "ocr_character_count": 203
+        },
+        {
+          "image": "Listman16.JPEG",
+          "ground_truth": "Listman16.txt",
+          "character_similarity": 0.44966442953020136,
+          "token_similarity": 0.13157894736842105,
+          "overall_similarity": 0.35423878488166727,
+          "mean_confidence": 0.6466487447420756,
+          "min_confidence": 0.1352939009666443,
+          "max_confidence": 0.9437993168830872,
+          "ocr_block_count": 15,
+          "ocr_character_count": 137
+        },
+        {
+          "image": "Listman17.JPEG",
+          "ground_truth": "Listman17.txt",
+          "character_similarity": 0.03773584905660377,
+          "token_similarity": 0.17647058823529413,
+          "overall_similarity": 0.07935627081021088,
+          "mean_confidence": 0.7585837543010712,
+          "min_confidence": 0.6041167378425598,
+          "max_confidence": 0.8568258881568909,
+          "ocr_block_count": 14,
+          "ocr_character_count": 215
+        },
+        {
+          "image": "Listman2.JPEG",
+          "ground_truth": "Listman2.txt",
+          "character_similarity": 0.07760532150776053,
+          "token_similarity": 0.05785123966942149,
+          "overall_similarity": 0.07167909695625882,
+          "mean_confidence": 0.6398781196159475,
+          "min_confidence": 0.3781017065048218,
+          "max_confidence": 0.8928672671318054,
+          "ocr_block_count": 34,
+          "ocr_character_count": 503
+        }
+      ],
+      "averages": {
+        "character_similarity": 0.1548077655123253,
+        "token_similarity": 0.08444497376700387,
+        "overall_similarity": 0.13369892798872887,
+        "mean_confidence": 0.6846939349460371
+      }
+    },
+    "grayscale_only": {
+      "per_image": [
+        {
+          "image": "Closest10.JPEG",
+          "ground_truth": "Closest10.txt",
+          "character_similarity": 0.07967032967032966,
+          "token_similarity": 0.10144927536231885,
+          "overall_similarity": 0.08620401337792641,
+          "mean_confidence": 0.7539326203496832,
+          "min_confidence": 0.558632493019104,
+          "max_confidence": 0.9471844434738159,
+          "ocr_block_count": 19,
+          "ocr_character_count": 371
+        },
+        {
+          "image": "Closest12.JPEG",
+          "ground_truth": "Closest12.txt",
+          "character_similarity": 0.09207161125319693,
+          "token_similarity": 0.06201550387596899,
+          "overall_similarity": 0.08305477904002855,
+          "mean_confidence": 0.7299028890473502,
+          "min_confidence": 0.13411346077919006,
+          "max_confidence": 0.9920349717140198,
+          "ocr_block_count": 35,
+          "ocr_character_count": 533
+        },
+        {
+          "image": "Closest13.JPEG",
+          "ground_truth": "Closest13.txt",
+          "character_similarity": 0.05449591280653951,
+          "token_similarity": 0.04878048780487805,
+          "overall_similarity": 0.052781285306041065,
+          "mean_confidence": 0.64551832118342,
+          "min_confidence": 0.2606128752231598,
+          "max_confidence": 0.9807727336883545,
+          "ocr_block_count": 31,
+          "ocr_character_count": 320
+        },
+        {
+          "image": "Listman15.JPEG",
+          "ground_truth": "Listman15.txt",
+          "character_similarity": 0.09947643979057591,
+          "token_similarity": 0.03389830508474576,
+          "overall_similarity": 0.07980299937882687,
+          "mean_confidence": 0.6176050092492785,
+          "min_confidence": 0.253805547952652,
+          "max_confidence": 0.9419833421707153,
+          "ocr_block_count": 28,
+          "ocr_character_count": 212
+        },
+        {
+          "image": "Listman16.JPEG",
+          "ground_truth": "Listman16.txt",
+          "character_similarity": 0.4726027397260274,
+          "token_similarity": 0.1282051282051282,
+          "overall_similarity": 0.3692834562697576,
+          "mean_confidence": 0.6375564326133046,
+          "min_confidence": 0.138199120759964,
+          "max_confidence": 0.9300940036773682,
+          "ocr_block_count": 14,
+          "ocr_character_count": 131
+        },
+        {
+          "image": "Listman17.JPEG",
+          "ground_truth": "Listman17.txt",
+          "character_similarity": 0.33540372670807456,
+          "token_similarity": 0.15384615384615385,
+          "overall_similarity": 0.28093645484949836,
+          "mean_confidence": 0.7764843915190015,
+          "min_confidence": 0.6441436409950256,
+          "max_confidence": 0.8875071406364441,
+          "ocr_block_count": 14,
+          "ocr_character_count": 221
+        },
+        {
+          "image": "Listman2.JPEG",
+          "ground_truth": "Listman2.txt",
+          "character_similarity": 0.09333333333333334,
+          "token_similarity": 0.05263157894736842,
+          "overall_similarity": 0.08112280701754385,
+          "mean_confidence": 0.63632682710886,
+          "min_confidence": 0.2757515609264374,
+          "max_confidence": 0.8469065427780151,
+          "ocr_block_count": 32,
+          "ocr_character_count": 501
+        }
+      ],
+      "averages": {
+        "character_similarity": 0.17529344189829676,
+        "token_similarity": 0.08297520473236601,
+        "overall_similarity": 0.14759797074851752,
+        "mean_confidence": 0.6853323558672711
+      }
+    },
+    "upscaling_only": {
+      "per_image": [
+        {
+          "image": "Closest10.JPEG",
+          "ground_truth": "Closest10.txt",
+          "character_similarity": 0.126514131897712,
+          "token_similarity": 0.1095890410958904,
+          "overall_similarity": 0.12143660465716552,
+          "mean_confidence": 0.7768203553400541,
+          "min_confidence": 0.5421262383460999,
+          "max_confidence": 0.9143128991127014,
+          "ocr_block_count": 19,
+          "ocr_character_count": 386
+        },
+        {
+          "image": "Closest12.JPEG",
+          "ground_truth": "Closest12.txt",
+          "character_similarity": 0.155955441302485,
+          "token_similarity": 0.078125,
+          "overall_similarity": 0.1326063089117395,
+          "mean_confidence": 0.7426345067865708,
+          "min_confidence": 0.40086793899536133,
+          "max_confidence": 0.9886864423751831,
+          "ocr_block_count": 34,
+          "ocr_character_count": 528
+        },
+        {
+          "image": "Closest13.JPEG",
+          "ground_truth": "Closest13.txt",
+          "character_similarity": 0.0917941585535466,
+          "token_similarity": 0.0375,
+          "overall_similarity": 0.0755059109874826,
+          "mean_confidence": 0.6494873384279864,
+          "min_confidence": 0.17422692477703094,
+          "max_confidence": 0.979450523853302,
+          "ocr_block_count": 28,
+          "ocr_character_count": 305
+        },
+        {
+          "image": "Listman15.JPEG",
+          "ground_truth": "Listman15.txt",
+          "character_similarity": 0.1443850267379679,
+          "token_similarity": 0.0,
+          "overall_similarity": 0.10106951871657753,
+          "mean_confidence": 0.5788047254085541,
+          "min_confidence": 0.32357072830200195,
+          "max_confidence": 0.9362436532974243,
+          "ocr_block_count": 25,
+          "ocr_character_count": 203
+        },
+        {
+          "image": "Listman16.JPEG",
+          "ground_truth": "Listman16.txt",
+          "character_similarity": 0.44966442953020136,
+          "token_similarity": 0.13157894736842105,
+          "overall_similarity": 0.35423878488166727,
+          "mean_confidence": 0.6466487447420756,
+          "min_confidence": 0.1352939009666443,
+          "max_confidence": 0.9437993168830872,
+          "ocr_block_count": 15,
+          "ocr_character_count": 137
+        },
+        {
+          "image": "Listman17.JPEG",
+          "ground_truth": "Listman17.txt",
+          "character_similarity": 0.03773584905660377,
+          "token_similarity": 0.17647058823529413,
+          "overall_similarity": 0.07935627081021088,
+          "mean_confidence": 0.7585837543010712,
+          "min_confidence": 0.6041167378425598,
+          "max_confidence": 0.8568258881568909,
+          "ocr_block_count": 14,
+          "ocr_character_count": 215
+        },
+        {
+          "image": "Listman2.JPEG",
+          "ground_truth": "Listman2.txt",
+          "character_similarity": 0.07760532150776053,
+          "token_similarity": 0.05785123966942149,
+          "overall_similarity": 0.07167909695625882,
+          "mean_confidence": 0.6398781196159475,
+          "min_confidence": 0.3781017065048218,
+          "max_confidence": 0.8928672671318054,
+          "ocr_block_count": 34,
+          "ocr_character_count": 503
+        }
+      ],
+      "averages": {
+        "character_similarity": 0.1548077655123253,
+        "token_similarity": 0.08444497376700387,
+        "overall_similarity": 0.13369892798872887,
+        "mean_confidence": 0.6846939349460371
+      }
+    },
+    "adaptive_threshold_only": {
+      "per_image": [
+        {
+          "image": "Closest10.JPEG",
+          "ground_truth": "Closest10.txt",
+          "character_similarity": 0.06275579809004093,
+          "token_similarity": 0.10810810810810811,
+          "overall_similarity": 0.07636149109546109,
+          "mean_confidence": 0.7185538790442727,
+          "min_confidence": 0.30146440863609314,
+          "max_confidence": 0.85797518491745,
+          "ocr_block_count": 22,
+          "ocr_character_count": 376
+        },
+        {
+          "image": "Closest12.JPEG",
+          "ground_truth": "Closest12.txt",
+          "character_similarity": 0.11265164644714037,
+          "token_similarity": 0.07936507936507936,
+          "overall_similarity": 0.10266567632252206,
+          "mean_confidence": 0.6893687600439246,
+          "min_confidence": 0.07280606031417847,
+          "max_confidence": 0.9219979643821716,
+          "ocr_block_count": 33,
+          "ocr_character_count": 515
+        },
+        {
+          "image": "Closest13.JPEG",
+          "ground_truth": "Closest13.txt",
+          "character_similarity": 0.056338028169014086,
+          "token_similarity": 0.0449438202247191,
+          "overall_similarity": 0.05291976578572558,
+          "mean_confidence": 0.5103645210987643,
+          "min_confidence": 0.10709686577320099,
+          "max_confidence": 0.986650824546814,
+          "ocr_block_count": 38,
+          "ocr_character_count": 296
+        },
+        {
+          "image": "Listman15.JPEG",
+          "ground_truth": "Listman15.txt",
+          "character_similarity": 0.014742014742014743,
+          "token_similarity": 0.029411764705882353,
+          "overall_similarity": 0.019142939731175024,
+          "mean_confidence": 0.5885937676035069,
+          "min_confidence": 0.05659611150622368,
+          "max_confidence": 0.978839635848999,
+          "ocr_block_count": 37,
+          "ocr_character_count": 236
+        },
+        {
+          "image": "Listman16.JPEG",
+          "ground_truth": "Listman16.txt",
+          "character_similarity": 0.34057971014492755,
+          "token_similarity": 0.07317073170731707,
+          "overall_similarity": 0.2603570166136444,
+          "mean_confidence": 0.5286327717559678,
+          "min_confidence": 0.07744701951742172,
+          "max_confidence": 0.8118089437484741,
+          "ocr_block_count": 14,
+          "ocr_character_count": 115
+        },
+        {
+          "image": "Listman17.JPEG",
+          "ground_truth": "Listman17.txt",
+          "character_similarity": 0.11787819253438114,
+          "token_similarity": 0.14285714285714285,
+          "overall_similarity": 0.12537187763120963,
+          "mean_confidence": 0.47790854205103483,
+          "min_confidence": 0.09187092632055283,
+          "max_confidence": 0.914672315120697,
+          "ocr_block_count": 34,
+          "ocr_character_count": 247
+        },
+        {
+          "image": "Listman2.JPEG",
+          "ground_truth": "Listman2.txt",
+          "character_similarity": 0.09885931558935361,
+          "token_similarity": 0.03571428571428571,
+          "overall_similarity": 0.07991580662683324,
+          "mean_confidence": 0.5786154260858893,
+          "min_confidence": 0.36762017011642456,
+          "max_confidence": 0.7722107172012329,
+          "ocr_block_count": 32,
+          "ocr_character_count": 393
+        }
+      ],
+      "averages": {
+        "character_similarity": 0.11482924367383893,
+        "token_similarity": 0.07336727609750493,
+        "overall_similarity": 0.10239065340093872,
+        "mean_confidence": 0.5845768096690515
+      }
+    },
+    "grayscale_plus_upscaling": {
+      "per_image": [
+        {
+          "image": "Closest10.JPEG",
+          "ground_truth": "Closest10.txt",
+          "character_similarity": 0.07967032967032966,
+          "token_similarity": 0.10144927536231885,
+          "overall_similarity": 0.08620401337792641,
+          "mean_confidence": 0.7539326203496832,
+          "min_confidence": 0.558632493019104,
+          "max_confidence": 0.9471844434738159,
+          "ocr_block_count": 19,
+          "ocr_character_count": 371
+        },
+        {
+          "image": "Closest12.JPEG",
+          "ground_truth": "Closest12.txt",
+          "character_similarity": 0.09207161125319693,
+          "token_similarity": 0.06201550387596899,
+          "overall_similarity": 0.08305477904002855,
+          "mean_confidence": 0.7299028890473502,
+          "min_confidence": 0.13411346077919006,
+          "max_confidence": 0.9920349717140198,
+          "ocr_block_count": 35,
+          "ocr_character_count": 533
+        },
+        {
+          "image": "Closest13.JPEG",
+          "ground_truth": "Closest13.txt",
+          "character_similarity": 0.05449591280653951,
+          "token_similarity": 0.04878048780487805,
+          "overall_similarity": 0.052781285306041065,
+          "mean_confidence": 0.64551832118342,
+          "min_confidence": 0.2606128752231598,
+          "max_confidence": 0.9807727336883545,
+          "ocr_block_count": 31,
+          "ocr_character_count": 320
+        },
+        {
+          "image": "Listman15.JPEG",
+          "ground_truth": "Listman15.txt",
+          "character_similarity": 0.09947643979057591,
+          "token_similarity": 0.03389830508474576,
+          "overall_similarity": 0.07980299937882687,
+          "mean_confidence": 0.6176050092492785,
+          "min_confidence": 0.253805547952652,
+          "max_confidence": 0.9419833421707153,
+          "ocr_block_count": 28,
+          "ocr_character_count": 212
+        },
+        {
+          "image": "Listman16.JPEG",
+          "ground_truth": "Listman16.txt",
+          "character_similarity": 0.4726027397260274,
+          "token_similarity": 0.1282051282051282,
+          "overall_similarity": 0.3692834562697576,
+          "mean_confidence": 0.6375564326133046,
+          "min_confidence": 0.138199120759964,
+          "max_confidence": 0.9300940036773682,
+          "ocr_block_count": 14,
+          "ocr_character_count": 131
+        },
+        {
+          "image": "Listman17.JPEG",
+          "ground_truth": "Listman17.txt",
+          "character_similarity": 0.33540372670807456,
+          "token_similarity": 0.15384615384615385,
+          "overall_similarity": 0.28093645484949836,
+          "mean_confidence": 0.7764843915190015,
+          "min_confidence": 0.6441436409950256,
+          "max_confidence": 0.8875071406364441,
+          "ocr_block_count": 14,
+          "ocr_character_count": 221
+        },
+        {
+          "image": "Listman2.JPEG",
+          "ground_truth": "Listman2.txt",
+          "character_similarity": 0.09333333333333334,
+          "token_similarity": 0.05263157894736842,
+          "overall_similarity": 0.08112280701754385,
+          "mean_confidence": 0.63632682710886,
+          "min_confidence": 0.2757515609264374,
+          "max_confidence": 0.8469065427780151,
+          "ocr_block_count": 32,
+          "ocr_character_count": 501
+        }
+      ],
+      "averages": {
+        "character_similarity": 0.17529344189829676,
+        "token_similarity": 0.08297520473236601,
+        "overall_similarity": 0.14759797074851752,
+        "mean_confidence": 0.6853323558672711
+      }
+    },
+    "grayscale_plus_adaptive_threshold": {
+      "per_image": [
+        {
+          "image": "Closest10.JPEG",
+          "ground_truth": "Closest10.txt",
+          "character_similarity": 0.06275579809004093,
+          "token_similarity": 0.10810810810810811,
+          "overall_similarity": 0.07636149109546109,
+          "mean_confidence": 0.7185538790442727,
+          "min_confidence": 0.30146440863609314,
+          "max_confidence": 0.85797518491745,
+          "ocr_block_count": 22,
+          "ocr_character_count": 376
+        },
+        {
+          "image": "Closest12.JPEG",
+          "ground_truth": "Closest12.txt",
+          "character_similarity": 0.11265164644714037,
+          "token_similarity": 0.07936507936507936,
+          "overall_similarity": 0.10266567632252206,
+          "mean_confidence": 0.6893687600439246,
+          "min_confidence": 0.07280606031417847,
+          "max_confidence": 0.9219979643821716,
+          "ocr_block_count": 33,
+          "ocr_character_count": 515
+        },
+        {
+          "image": "Closest13.JPEG",
+          "ground_truth": "Closest13.txt",
+          "character_similarity": 0.056338028169014086,
+          "token_similarity": 0.0449438202247191,
+          "overall_similarity": 0.05291976578572558,
+          "mean_confidence": 0.5103645210987643,
+          "min_confidence": 0.10709686577320099,
+          "max_confidence": 0.986650824546814,
+          "ocr_block_count": 38,
+          "ocr_character_count": 296
+        },
+        {
+          "image": "Listman15.JPEG",
+          "ground_truth": "Listman15.txt",
+          "character_similarity": 0.014742014742014743,
+          "token_similarity": 0.029411764705882353,
+          "overall_similarity": 0.019142939731175024,
+          "mean_confidence": 0.5885937676035069,
+          "min_confidence": 0.05659611150622368,
+          "max_confidence": 0.978839635848999,
+          "ocr_block_count": 37,
+          "ocr_character_count": 236
+        },
+        {
+          "image": "Listman16.JPEG",
+          "ground_truth": "Listman16.txt",
+          "character_similarity": 0.34057971014492755,
+          "token_similarity": 0.07317073170731707,
+          "overall_similarity": 0.2603570166136444,
+          "mean_confidence": 0.5286327717559678,
+          "min_confidence": 0.07744701951742172,
+          "max_confidence": 0.8118089437484741,
+          "ocr_block_count": 14,
+          "ocr_character_count": 115
+        },
+        {
+          "image": "Listman17.JPEG",
+          "ground_truth": "Listman17.txt",
+          "character_similarity": 0.11787819253438114,
+          "token_similarity": 0.14285714285714285,
+          "overall_similarity": 0.12537187763120963,
+          "mean_confidence": 0.47790854205103483,
+          "min_confidence": 0.09187092632055283,
+          "max_confidence": 0.914672315120697,
+          "ocr_block_count": 34,
+          "ocr_character_count": 247
+        },
+        {
+          "image": "Listman2.JPEG",
+          "ground_truth": "Listman2.txt",
+          "character_similarity": 0.09885931558935361,
+          "token_similarity": 0.03571428571428571,
+          "overall_similarity": 0.07991580662683324,
+          "mean_confidence": 0.5786154260858893,
+          "min_confidence": 0.36762017011642456,
+          "max_confidence": 0.7722107172012329,
+          "ocr_block_count": 32,
+          "ocr_character_count": 393
+        }
+      ],
+      "averages": {
+        "character_similarity": 0.11482924367383893,
+        "token_similarity": 0.07336727609750493,
+        "overall_similarity": 0.10239065340093872,
+        "mean_confidence": 0.5845768096690515
+      }
+    },
+    "upscaling_plus_adaptive_threshold": {
+      "per_image": [
+        {
+          "image": "Closest10.JPEG",
+          "ground_truth": "Closest10.txt",
+          "character_similarity": 0.06275579809004093,
+          "token_similarity": 0.10810810810810811,
+          "overall_similarity": 0.07636149109546109,
+          "mean_confidence": 0.7185538790442727,
+          "min_confidence": 0.30146440863609314,
+          "max_confidence": 0.85797518491745,
+          "ocr_block_count": 22,
+          "ocr_character_count": 376
+        },
+        {
+          "image": "Closest12.JPEG",
+          "ground_truth": "Closest12.txt",
+          "character_similarity": 0.11265164644714037,
+          "token_similarity": 0.07936507936507936,
+          "overall_similarity": 0.10266567632252206,
+          "mean_confidence": 0.6893687600439246,
+          "min_confidence": 0.07280606031417847,
+          "max_confidence": 0.9219979643821716,
+          "ocr_block_count": 33,
+          "ocr_character_count": 515
+        },
+        {
+          "image": "Closest13.JPEG",
+          "ground_truth": "Closest13.txt",
+          "character_similarity": 0.056338028169014086,
+          "token_similarity": 0.0449438202247191,
+          "overall_similarity": 0.05291976578572558,
+          "mean_confidence": 0.5103645210987643,
+          "min_confidence": 0.10709686577320099,
+          "max_confidence": 0.986650824546814,
+          "ocr_block_count": 38,
+          "ocr_character_count": 296
+        },
+        {
+          "image": "Listman15.JPEG",
+          "ground_truth": "Listman15.txt",
+          "character_similarity": 0.014742014742014743,
+          "token_similarity": 0.029411764705882353,
+          "overall_similarity": 0.019142939731175024,
+          "mean_confidence": 0.5885937676035069,
+          "min_confidence": 0.05659611150622368,
+          "max_confidence": 0.978839635848999,
+          "ocr_block_count": 37,
+          "ocr_character_count": 236
+        },
+        {
+          "image": "Listman16.JPEG",
+          "ground_truth": "Listman16.txt",
+          "character_similarity": 0.34057971014492755,
+          "token_similarity": 0.07317073170731707,
+          "overall_similarity": 0.2603570166136444,
+          "mean_confidence": 0.5286327717559678,
+          "min_confidence": 0.07744701951742172,
+          "max_confidence": 0.8118089437484741,
+          "ocr_block_count": 14,
+          "ocr_character_count": 115
+        },
+        {
+          "image": "Listman17.JPEG",
+          "ground_truth": "Listman17.txt",
+          "character_similarity": 0.11787819253438114,
+          "token_similarity": 0.14285714285714285,
+          "overall_similarity": 0.12537187763120963,
+          "mean_confidence": 0.47790854205103483,
+          "min_confidence": 0.09187092632055283,
+          "max_confidence": 0.914672315120697,
+          "ocr_block_count": 34,
+          "ocr_character_count": 247
+        },
+        {
+          "image": "Listman2.JPEG",
+          "ground_truth": "Listman2.txt",
+          "character_similarity": 0.09885931558935361,
+          "token_similarity": 0.03571428571428571,
+          "overall_similarity": 0.07991580662683324,
+          "mean_confidence": 0.5786154260858893,
+          "min_confidence": 0.36762017011642456,
+          "max_confidence": 0.7722107172012329,
+          "ocr_block_count": 32,
+          "ocr_character_count": 393
+        }
+      ],
+      "averages": {
+        "character_similarity": 0.11482924367383893,
+        "token_similarity": 0.07336727609750493,
+        "overall_similarity": 0.10239065340093872,
+        "mean_confidence": 0.5845768096690515
+      }
+    },
+    "current_full_pipeline": {
+      "per_image": [
+        {
+          "image": "Closest10.JPEG",
+          "ground_truth": "Closest10.txt",
+          "character_similarity": 0.06275579809004093,
+          "token_similarity": 0.10810810810810811,
+          "overall_similarity": 0.07636149109546109,
+          "mean_confidence": 0.7185538790442727,
+          "min_confidence": 0.30146440863609314,
+          "max_confidence": 0.85797518491745,
+          "ocr_block_count": 22,
+          "ocr_character_count": 376
+        },
+        {
+          "image": "Closest12.JPEG",
+          "ground_truth": "Closest12.txt",
+          "character_similarity": 0.11265164644714037,
+          "token_similarity": 0.07936507936507936,
+          "overall_similarity": 0.10266567632252206,
+          "mean_confidence": 0.6893687600439246,
+          "min_confidence": 0.07280606031417847,
+          "max_confidence": 0.9219979643821716,
+          "ocr_block_count": 33,
+          "ocr_character_count": 515
+        },
+        {
+          "image": "Closest13.JPEG",
+          "ground_truth": "Closest13.txt",
+          "character_similarity": 0.056338028169014086,
+          "token_similarity": 0.0449438202247191,
+          "overall_similarity": 0.05291976578572558,
+          "mean_confidence": 0.5103645210987643,
+          "min_confidence": 0.10709686577320099,
+          "max_confidence": 0.986650824546814,
+          "ocr_block_count": 38,
+          "ocr_character_count": 296
+        },
+        {
+          "image": "Listman15.JPEG",
+          "ground_truth": "Listman15.txt",
+          "character_similarity": 0.014742014742014743,
+          "token_similarity": 0.029411764705882353,
+          "overall_similarity": 0.019142939731175024,
+          "mean_confidence": 0.5885937676035069,
+          "min_confidence": 0.05659611150622368,
+          "max_confidence": 0.978839635848999,
+          "ocr_block_count": 37,
+          "ocr_character_count": 236
+        },
+        {
+          "image": "Listman16.JPEG",
+          "ground_truth": "Listman16.txt",
+          "character_similarity": 0.34057971014492755,
+          "token_similarity": 0.07317073170731707,
+          "overall_similarity": 0.2603570166136444,
+          "mean_confidence": 0.5286327717559678,
+          "min_confidence": 0.07744701951742172,
+          "max_confidence": 0.8118089437484741,
+          "ocr_block_count": 14,
+          "ocr_character_count": 115
+        },
+        {
+          "image": "Listman17.JPEG",
+          "ground_truth": "Listman17.txt",
+          "character_similarity": 0.11787819253438114,
+          "token_similarity": 0.14285714285714285,
+          "overall_similarity": 0.12537187763120963,
+          "mean_confidence": 0.47790854205103483,
+          "min_confidence": 0.09187092632055283,
+          "max_confidence": 0.914672315120697,
+          "ocr_block_count": 34,
+          "ocr_character_count": 247
+        },
+        {
+          "image": "Listman2.JPEG",
+          "ground_truth": "Listman2.txt",
+          "character_similarity": 0.09885931558935361,
+          "token_similarity": 0.03571428571428571,
+          "overall_similarity": 0.07991580662683324,
+          "mean_confidence": 0.5786154260858893,
+          "min_confidence": 0.36762017011642456,
+          "max_confidence": 0.7722107172012329,
+          "ocr_block_count": 32,
+          "ocr_character_count": 393
+        }
+      ],
+      "averages": {
+        "character_similarity": 0.11482924367383893,
+        "token_similarity": 0.07336727609750493,
+        "overall_similarity": 0.10239065340093872,
+        "mean_confidence": 0.5845768096690515
+      }
+    }
+  },
+  "per_image_best": [
+    {
+      "image": "Closest10.JPEG",
+      "best_configuration": "original",
+      "character_similarity": 0.126514131897712,
+      "token_similarity": 0.1095890410958904,
+      "overall_similarity": 0.12143660465716552,
+      "mean_confidence": 0.7768203553400541
+    },
+    {
+      "image": "Closest12.JPEG",
+      "best_configuration": "original",
+      "character_similarity": 0.155955441302485,
+      "token_similarity": 0.078125,
+      "overall_similarity": 0.1326063089117395,
+      "mean_confidence": 0.7426345067865708
+    },
+    {
+      "image": "Closest13.JPEG",
+      "best_configuration": "original",
+      "character_similarity": 0.0917941585535466,
+      "token_similarity": 0.0375,
+      "overall_similarity": 0.0755059109874826,
+      "mean_confidence": 0.6494873384279864
+    },
+    {
+      "image": "Listman15.JPEG",
+      "best_configuration": "original",
+      "character_similarity": 0.1443850267379679,
+      "token_similarity": 0.0,
+      "overall_similarity": 0.10106951871657753,
+      "mean_confidence": 0.5788047254085541
+    },
+    {
+      "image": "Listman16.JPEG",
+      "best_configuration": "grayscale_only",
+      "character_similarity": 0.4726027397260274,
+      "token_similarity": 0.1282051282051282,
+      "overall_similarity": 0.3692834562697576,
+      "mean_confidence": 0.6375564326133046
+    },
+    {
+      "image": "Listman17.JPEG",
+      "best_configuration": "grayscale_only",
+      "character_similarity": 0.33540372670807456,
+      "token_similarity": 0.15384615384615385,
+      "overall_similarity": 0.28093645484949836,
+      "mean_confidence": 0.7764843915190015
+    },
+    {
+      "image": "Listman2.JPEG",
+      "best_configuration": "grayscale_only",
+      "character_similarity": 0.09333333333333334,
+      "token_similarity": 0.05263157894736842,
+      "overall_similarity": 0.08112280701754385,
+      "mean_confidence": 0.63632682710886
+    }
+  ],
+  "best_overall_configuration": "grayscale_only",
+  "worst_overall_configuration": "current_full_pipeline"
+}

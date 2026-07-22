@@ -1,0 +1,30 @@
+﻿#include <stdio.h>
+
+void main()
+{
+    int a[100], n, target, temp1, temp2, index;
+
+    scanf("%d", &n);  // Read the number of elements
+
+    for (int i = 0; i < n; i++)   // Initialize the array
+        scanf("%d", &a[i]);
+
+    scanf("%d", &target);  // Read the target value
+    temp2 = __INT_MAX();   // Set temp2 to the highest integer value for comparison
+
+    for (int i = 0; i < n; i++)
+    {
+        temp1 = a[i] - target;
+
+        if (temp1 < 0)  // Convert the difference to a positive number
+            temp1 = temp1* -1;
+
+        if (temp1 < temp2)  // Store the least difference found
+        {
+            temp2 = temp1;
+            index = i;  // Store the index of the closest element
+        }
+    }
+
+    printf("%d", a[index]);  // Print the closest element
+}

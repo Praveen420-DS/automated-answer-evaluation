@@ -1,0 +1,26 @@
+﻿sl1 = [3, 1, 4, 1, 5, 9]
+sl2 = [2, 6, 5, 3, 5]
+
+l2 = length(sl2)
+l1 = length(sl1)
+l1.extend(l2)  # Function to merge lists in Python
+c = l1
+
+for i in range(l2):
+    sl1[c] = sl2[i]
+    c = c + 1
+l1 = length(sl1)
+
+for i in range(l1):
+    if(sl1.count(sl1[i] > 1) 
+        sl1.remove(sl1[i])
+        
+sl1.sort()
+print(sl1)
+for i in range(l1-1):
+    for j in range(l1-i-1):
+        if(a[i] > a[j]):
+             t = sl1[i]
+             sl1[i] = sl1[j]
+             sl1[j] = t
+print(sl1)
