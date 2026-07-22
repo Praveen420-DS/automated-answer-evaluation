@@ -1,0 +1,12 @@
+﻿def manipulate(list1, list2):
+    list3 = list1.append(list2)
+    
+    list3 = list3.sort()
+    
+    # to remove duplicates
+    for i in list3:
+        for j in list3:
+            if i == j:
+                list3.pop(j)
+
+    return list3
