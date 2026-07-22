@@ -1,0 +1,406 @@
+{
+  "pipeline": {
+    "ocr_model": "PP-OCRv5_server_det + PP-OCRv5_server_rec",
+    "structure_model": "PP-StructureV3 / PP-DocLayout_plus-L",
+    "device": "cpu"
+  },
+  "image_count": 7,
+  "images": [
+    {
+      "image": "Closest10.JPEG",
+      "ground_truth": "Closest10.txt",
+      "original": {
+        "character_similarity": 0.126514131897712,
+        "token_similarity": 0.1095890410958904,
+        "overall_similarity": 0.12143660465716552,
+        "mean_confidence": 0.7768203553400541,
+        "min_confidence": 0.5421262383460999,
+        "max_confidence": 0.9143128991127014,
+        "ocr_block_count": 19,
+        "ocr_character_count": 386
+      },
+      "preprocessed": {
+        "character_similarity": 0.06275579809004093,
+        "token_similarity": 0.10810810810810811,
+        "overall_similarity": 0.07636149109546109,
+        "mean_confidence": 0.7185538790442727,
+        "min_confidence": 0.30146440863609314,
+        "max_confidence": 0.85797518491745,
+        "ocr_block_count": 22,
+        "ocr_character_count": 376
+      },
+      "preprocessed_with_structure": {
+        "character_similarity": 0.06275579809004093,
+        "token_similarity": 0.10810810810810811,
+        "overall_similarity": 0.07636149109546109,
+        "mean_confidence": 0.7185538790442727,
+        "min_confidence": 0.30146440863609314,
+        "max_confidence": 0.85797518491745,
+        "ocr_block_count": 22,
+        "ocr_character_count": 376,
+        "structure_available": true,
+        "structure_block_count": 1,
+        "structure_block_types": [
+          "formula"
+        ],
+        "table_block_count": 0
+      },
+      "historical_tesseract": {
+        "character_similarity": 0.07581699346405228,
+        "token_similarity": 0.07339449541284404,
+        "overall_similarity": 0.0750902440486898,
+        "method": "Otsu",
+        "psm": 6,
+        "historical_character_similarity": 0.0758
+      }
+    },
+    {
+      "image": "Closest12.JPEG",
+      "ground_truth": "Closest12.txt",
+      "original": {
+        "character_similarity": 0.155955441302485,
+        "token_similarity": 0.078125,
+        "overall_similarity": 0.1326063089117395,
+        "mean_confidence": 0.7426345067865708,
+        "min_confidence": 0.40086793899536133,
+        "max_confidence": 0.9886864423751831,
+        "ocr_block_count": 34,
+        "ocr_character_count": 528
+      },
+      "preprocessed": {
+        "character_similarity": 0.11265164644714037,
+        "token_similarity": 0.07936507936507936,
+        "overall_similarity": 0.10266567632252206,
+        "mean_confidence": 0.6893687600439246,
+        "min_confidence": 0.07280606031417847,
+        "max_confidence": 0.9219979643821716,
+        "ocr_block_count": 33,
+        "ocr_character_count": 515
+      },
+      "preprocessed_with_structure": {
+        "character_similarity": 0.11265164644714037,
+        "token_similarity": 0.07936507936507936,
+        "overall_similarity": 0.10266567632252206,
+        "mean_confidence": 0.6893687600439246,
+        "min_confidence": 0.07280606031417847,
+        "max_confidence": 0.9219979643821716,
+        "ocr_block_count": 33,
+        "ocr_character_count": 515,
+        "structure_available": true,
+        "structure_block_count": 1,
+        "structure_block_types": [
+          "formula"
+        ],
+        "table_block_count": 0
+      },
+      "historical_tesseract": {
+        "character_similarity": 0.11053984575835475,
+        "token_similarity": 0.01904761904761905,
+        "overall_similarity": 0.08309217774513404,
+        "method": "Adaptive",
+        "psm": 11,
+        "historical_character_similarity": 0.1105
+      }
+    },
+    {
+      "image": "Closest13.JPEG",
+      "ground_truth": "Closest13.txt",
+      "original": {
+        "character_similarity": 0.0917941585535466,
+        "token_similarity": 0.0375,
+        "overall_similarity": 0.0755059109874826,
+        "mean_confidence": 0.6494873384279864,
+        "min_confidence": 0.17422692477703094,
+        "max_confidence": 0.979450523853302,
+        "ocr_block_count": 28,
+        "ocr_character_count": 305
+      },
+      "preprocessed": {
+        "character_similarity": 0.056338028169014086,
+        "token_similarity": 0.0449438202247191,
+        "overall_similarity": 0.05291976578572558,
+        "mean_confidence": 0.5103645210987643,
+        "min_confidence": 0.10709686577320099,
+        "max_confidence": 0.986650824546814,
+        "ocr_block_count": 38,
+        "ocr_character_count": 296
+      },
+      "preprocessed_with_structure": {
+        "character_similarity": 0.056338028169014086,
+        "token_similarity": 0.0449438202247191,
+        "overall_similarity": 0.05291976578572558,
+        "mean_confidence": 0.5103645210987643,
+        "min_confidence": 0.10709686577320099,
+        "max_confidence": 0.986650824546814,
+        "ocr_block_count": 38,
+        "ocr_character_count": 296,
+        "structure_available": true,
+        "structure_block_count": 2,
+        "structure_block_types": [
+          "header",
+          "text"
+        ],
+        "table_block_count": 0
+      },
+      "historical_tesseract": {
+        "character_similarity": 0.044630404463040445,
+        "token_similarity": 0.03571428571428571,
+        "overall_similarity": 0.041955568838414024,
+        "method": "Otsu",
+        "psm": 6,
+        "historical_character_similarity": 0.0446
+      }
+    },
+    {
+      "image": "Listman15.JPEG",
+      "ground_truth": "Listman15.txt",
+      "original": {
+        "character_similarity": 0.1443850267379679,
+        "token_similarity": 0.0,
+        "overall_similarity": 0.10106951871657753,
+        "mean_confidence": 0.5788047254085541,
+        "min_confidence": 0.32357072830200195,
+        "max_confidence": 0.9362436532974243,
+        "ocr_block_count": 25,
+        "ocr_character_count": 203
+      },
+      "preprocessed": {
+        "character_similarity": 0.014742014742014743,
+        "token_similarity": 0.029411764705882353,
+        "overall_similarity": 0.019142939731175024,
+        "mean_confidence": 0.5885937676035069,
+        "min_confidence": 0.05659611150622368,
+        "max_confidence": 0.978839635848999,
+        "ocr_block_count": 37,
+        "ocr_character_count": 236
+      },
+      "preprocessed_with_structure": {
+        "character_similarity": 0.014742014742014743,
+        "token_similarity": 0.029411764705882353,
+        "overall_similarity": 0.019142939731175024,
+        "mean_confidence": 0.5885937676035069,
+        "min_confidence": 0.05659611150622368,
+        "max_confidence": 0.978839635848999,
+        "ocr_block_count": 37,
+        "ocr_character_count": 236,
+        "structure_available": true,
+        "structure_block_count": 3,
+        "structure_block_types": [
+          "formula",
+          "text"
+        ],
+        "table_block_count": 0
+      },
+      "historical_tesseract": {
+        "character_similarity": 0.3955431754874652,
+        "token_similarity": 0.014705882352941176,
+        "overall_similarity": 0.28129198754710794,
+        "method": "Otsu",
+        "psm": 11,
+        "historical_character_similarity": 0.39549999999999996
+      }
+    },
+    {
+      "image": "Listman16.JPEG",
+      "ground_truth": "Listman16.txt",
+      "original": {
+        "character_similarity": 0.44966442953020136,
+        "token_similarity": 0.13157894736842105,
+        "overall_similarity": 0.35423878488166727,
+        "mean_confidence": 0.6466487447420756,
+        "min_confidence": 0.1352939009666443,
+        "max_confidence": 0.9437993168830872,
+        "ocr_block_count": 15,
+        "ocr_character_count": 137
+      },
+      "preprocessed": {
+        "character_similarity": 0.34057971014492755,
+        "token_similarity": 0.07317073170731707,
+        "overall_similarity": 0.2603570166136444,
+        "mean_confidence": 0.5286327717559678,
+        "min_confidence": 0.07744701951742172,
+        "max_confidence": 0.8118089437484741,
+        "ocr_block_count": 14,
+        "ocr_character_count": 115
+      },
+      "preprocessed_with_structure": {
+        "character_similarity": 0.34057971014492755,
+        "token_similarity": 0.07317073170731707,
+        "overall_similarity": 0.2603570166136444,
+        "mean_confidence": 0.5286327717559678,
+        "min_confidence": 0.07744701951742172,
+        "max_confidence": 0.8118089437484741,
+        "ocr_block_count": 14,
+        "ocr_character_count": 115,
+        "structure_available": true,
+        "structure_block_count": 2,
+        "structure_block_types": [
+          "doc_title",
+          "text"
+        ],
+        "table_block_count": 0
+      },
+      "historical_tesseract": {
+        "character_similarity": 0.2222222222222222,
+        "token_similarity": 0.027777777777777776,
+        "overall_similarity": 0.16388888888888886,
+        "method": "Original",
+        "psm": 6,
+        "historical_character_similarity": 0.22219999999999998
+      }
+    },
+    {
+      "image": "Listman17.JPEG",
+      "ground_truth": "Listman17.txt",
+      "original": {
+        "character_similarity": 0.03773584905660377,
+        "token_similarity": 0.17647058823529413,
+        "overall_similarity": 0.07935627081021088,
+        "mean_confidence": 0.7585837543010712,
+        "min_confidence": 0.6041167378425598,
+        "max_confidence": 0.8568258881568909,
+        "ocr_block_count": 14,
+        "ocr_character_count": 215
+      },
+      "preprocessed": {
+        "character_similarity": 0.11787819253438114,
+        "token_similarity": 0.14285714285714285,
+        "overall_similarity": 0.12537187763120963,
+        "mean_confidence": 0.47790854205103483,
+        "min_confidence": 0.09187092632055283,
+        "max_confidence": 0.914672315120697,
+        "ocr_block_count": 34,
+        "ocr_character_count": 247
+      },
+      "preprocessed_with_structure": {
+        "character_similarity": 0.11787819253438114,
+        "token_similarity": 0.14285714285714285,
+        "overall_similarity": 0.12537187763120963,
+        "mean_confidence": 0.47790854205103483,
+        "min_confidence": 0.09187092632055283,
+        "max_confidence": 0.914672315120697,
+        "ocr_block_count": 34,
+        "ocr_character_count": 247,
+        "structure_available": true,
+        "structure_block_count": 2,
+        "structure_block_types": [
+          "text"
+        ],
+        "table_block_count": 0
+      },
+      "historical_tesseract": {
+        "character_similarity": 0.18686868686868688,
+        "token_similarity": 0.0,
+        "overall_similarity": 0.13080808080808082,
+        "method": "CLAHE",
+        "psm": 6,
+        "historical_character_similarity": 0.1869
+      }
+    },
+    {
+      "image": "Listman2.JPEG",
+      "ground_truth": "Listman2.txt",
+      "original": {
+        "character_similarity": 0.07760532150776053,
+        "token_similarity": 0.05785123966942149,
+        "overall_similarity": 0.07167909695625882,
+        "mean_confidence": 0.6398781196159475,
+        "min_confidence": 0.3781017065048218,
+        "max_confidence": 0.8928672671318054,
+        "ocr_block_count": 34,
+        "ocr_character_count": 503
+      },
+      "preprocessed": {
+        "character_similarity": 0.09885931558935361,
+        "token_similarity": 0.03571428571428571,
+        "overall_similarity": 0.07991580662683324,
+        "mean_confidence": 0.5786154260858893,
+        "min_confidence": 0.36762017011642456,
+        "max_confidence": 0.7722107172012329,
+        "ocr_block_count": 32,
+        "ocr_character_count": 393
+      },
+      "preprocessed_with_structure": {
+        "character_similarity": 0.09885931558935361,
+        "token_similarity": 0.03571428571428571,
+        "overall_similarity": 0.07991580662683324,
+        "mean_confidence": 0.5786154260858893,
+        "min_confidence": 0.36762017011642456,
+        "max_confidence": 0.7722107172012329,
+        "ocr_block_count": 32,
+        "ocr_character_count": 393,
+        "structure_available": true,
+        "structure_block_count": 1,
+        "structure_block_types": [
+          "text"
+        ],
+        "table_block_count": 0
+      },
+      "historical_tesseract": {
+        "character_similarity": 0.2188034188034188,
+        "token_similarity": 0.03260869565217391,
+        "overall_similarity": 0.16294500185804534,
+        "method": "CLAHE",
+        "psm": 6,
+        "historical_character_similarity": 0.2188
+      }
+    }
+  ],
+  "averages": {
+    "original": {
+      "character_similarity": 0.1548077655123253,
+      "token_similarity": 0.08444497376700387,
+      "overall_similarity": 0.13369892798872887
+    },
+    "preprocessed": {
+      "character_similarity": 0.11482924367383893,
+      "token_similarity": 0.07336727609750493,
+      "overall_similarity": 0.10239065340093872
+    },
+    "preprocessed_with_structure": {
+      "character_similarity": 0.11482924367383893,
+      "token_similarity": 0.07336727609750493,
+      "overall_similarity": 0.10239065340093872
+    },
+    "historical_tesseract": {
+      "character_similarity": 0.17920353529532007,
+      "token_similarity": 0.02903553656537738,
+      "overall_similarity": 0.13415313567633727
+    },
+    "preprocessed_vs_tesseract_percentage_points": {
+      "character_similarity": -6.437429162148114,
+      "token_similarity": 4.433173953212755,
+      "overall_similarity": -3.1762482275398547
+    },
+    "confidence": {
+      "mean_of_image_means": 0.5845768096690515
+    },
+    "structure": {
+      "total_blocks": 12,
+      "images_with_structure": 7,
+      "total_table_blocks": 0
+    }
+  },
+  "best_preprocessed_image": {
+    "image": "Listman16.JPEG",
+    "character_similarity": 0.34057971014492755,
+    "token_similarity": 0.07317073170731707,
+    "overall_similarity": 0.2603570166136444,
+    "mean_confidence": 0.5286327717559678,
+    "min_confidence": 0.07744701951742172,
+    "max_confidence": 0.8118089437484741,
+    "ocr_block_count": 14,
+    "ocr_character_count": 115
+  },
+  "worst_preprocessed_image": {
+    "image": "Listman15.JPEG",
+    "character_similarity": 0.014742014742014743,
+    "token_similarity": 0.029411764705882353,
+    "overall_similarity": 0.019142939731175024,
+    "mean_confidence": 0.5885937676035069,
+    "min_confidence": 0.05659611150622368,
+    "max_confidence": 0.978839635848999,
+    "ocr_block_count": 37,
+    "ocr_character_count": 236
+  }
+}
