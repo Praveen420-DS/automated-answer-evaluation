@@ -7,21 +7,6 @@ from pathlib import Path
 
 
 # ============================================================
-# PROJECT ROOT
-# ============================================================
-
-PROJECT_ROOT = Path(
-    __file__
-).resolve().parents[2]
-
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(
-        0,
-        str(PROJECT_ROOT)
-    )
-
-
-# ============================================================
 # IMPORT FILTER AND RANKER
 # ============================================================
 
@@ -33,10 +18,21 @@ except ImportError:
 
 try:
     from app.ocr.candidate_ranker import (
-        calculate_rank_score
+        rank_candidate,
+        get_candidate_details
     )
 except ImportError:
-    calculate_rank_score = None
+    rank_candidate = None
+    get_candidate_details = None
+
+
+# ============================================================
+# PROJECT ROOT
+# ============================================================
+
+PROJECT_ROOT = Path(
+    __file__
+).resolve().parents[2]
 
 
 # ============================================================
@@ -793,7 +789,7 @@ def fallback_ranker(
 
     candidate[
 
-        "code_quality"
+        "code_quality_score"
 
     ] = round(
 
@@ -813,14 +809,14 @@ def fallback_ranker(
 
     candidate[
 
-        "token_quality"
+        "token_quality_score"
 
     ] = 1.0
 
 
     candidate[
 
-        "readability"
+        "readability_score"
 
     ] = round(
 
@@ -972,12 +968,120 @@ def apply_ranker(
     # Use real candidate ranker
     # --------------------------------------------------------
 
-    if calculate_rank_score is not None:
+    if rank_candidate is not None:
 
         try:
-            calculate_rank_score(
-                candidate
+
+            text = candidate.get(
+
+                "text",
+
+                ""
+
             )
+
+
+            confidence = candidate.get(
+
+                "confidence",
+
+                0.0
+
+            )
+
+
+            # ------------------------------------------------
+            # Get final ranking score
+            # ------------------------------------------------
+
+            result = rank_candidate(
+
+                text,
+
+                confidence
+
+            )
+
+
+            # ------------------------------------------------
+            # IMPORTANT:
+            # rank_candidate returns a number
+            # ------------------------------------------------
+
+            if isinstance(
+
+                result,
+
+                (
+
+                    int,
+
+                    float
+
+                )
+
+            ):
+
+                candidate[
+
+                    "rank_score"
+
+                ] = float(
+
+                    result
+
+                )
+
+
+            # ------------------------------------------------
+            # Get detailed metrics
+            # ------------------------------------------------
+
+            if get_candidate_details is not None:
+
+                details = (
+
+                    get_candidate_details(
+
+                        text,
+
+                        confidence
+
+                    )
+
+                )
+
+
+                if isinstance(
+
+                    details,
+
+                    dict
+
+                ):
+
+                    candidate.update(
+
+                        details
+
+                    )
+
+
+                    # Keep rank_candidate's
+                    # final score authoritative
+
+                    candidate[
+
+                        "rank_score"
+
+                    ] = float(
+
+                        result
+
+                    )
+
+
+                return candidate
 
 
             return candidate
@@ -1626,7 +1730,7 @@ def print_candidate_details(
 
         f"Code Quality     : "
 
-        f"{candidate.get('code_quality', 0.0):.4f}"
+        f"{candidate.get('code_quality_score', 0.0):.4f}"
 
     )
 
@@ -1644,7 +1748,7 @@ def print_candidate_details(
 
         f"Token Quality     : "
 
-        f"{candidate.get('token_quality', 0.0):.4f}"
+        f"{candidate.get('token_quality_score', 0.0):.4f}"
 
     )
 
@@ -1653,7 +1757,7 @@ def print_candidate_details(
 
         f"Readability       : "
 
-        f"{candidate.get('readability', 0.0):.4f}"
+        f"{candidate.get('readability_score', 0.0):.4f}"
 
     )
 
@@ -1888,7 +1992,7 @@ def run_ensemble_ocr(
             )
 
 
-            candidate = apply_ranker(
+            candidate = fallback_ranker(
 
                 candidate
 
@@ -1903,18 +2007,17 @@ def run_ensemble_ocr(
 
 
     # --------------------------------------------------------
-    # Consensus-based ensemble reranking
+    # Select best
     # --------------------------------------------------------
 
-    consensus_candidates = rerank_with_consensus(
-        processed_candidates
-    )
-
-    # Select best candidate after consensus reranking
     best_candidate = (
-        consensus_candidates[0]
-        if consensus_candidates
-        else None
+
+        select_best_candidate(
+
+            processed_candidates
+
+        )
+
     )
 
 
@@ -1932,14 +2035,22 @@ def run_ensemble_ocr(
     # --------------------------------------------------------
 
     sorted_candidates = sorted(
-    consensus_candidates,
-    key=lambda candidate:
-        candidate.get(
-            "final_ensemble_score",
-            0.0
-        ),
-    reverse=True
-)
+
+        processed_candidates,
+
+        key=lambda candidate:
+
+            candidate.get(
+
+                "rank_score",
+
+                0.0
+
+            ),
+
+        reverse=True
+
+    )
 
 
     # ========================================================
@@ -1987,15 +2098,7 @@ def run_ensemble_ocr(
         best_candidate
 
     )
-    print(
-        f"Consensus Score  : "
-        f"{best_candidate.get('consensus_score', 0.0):.4f}"
-    )
 
-    print(
-        f"Final Ensemble Score : "
-        f"{best_candidate.get('final_ensemble_score', 0.0):.4f}"
-    )
 
     # ========================================================
     # TOP 3

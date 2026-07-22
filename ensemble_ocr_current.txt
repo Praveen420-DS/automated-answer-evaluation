@@ -7,21 +7,6 @@ from pathlib import Path
 
 
 # ============================================================
-# PROJECT ROOT
-# ============================================================
-
-PROJECT_ROOT = Path(
-    __file__
-).resolve().parents[2]
-
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(
-        0,
-        str(PROJECT_ROOT)
-    )
-
-
-# ============================================================
 # IMPORT FILTER AND RANKER
 # ============================================================
 
@@ -33,10 +18,21 @@ except ImportError:
 
 try:
     from app.ocr.candidate_ranker import (
-        calculate_rank_score
+        rank_candidate,
+        get_candidate_details
     )
 except ImportError:
-    calculate_rank_score = None
+    rank_candidate = None
+    get_candidate_details = None
+
+
+# ============================================================
+# PROJECT ROOT
+# ============================================================
+
+PROJECT_ROOT = Path(
+    __file__
+).resolve().parents[2]
 
 
 # ============================================================
@@ -793,7 +789,7 @@ def fallback_ranker(
 
     candidate[
 
-        "code_quality"
+        "code_quality_score"
 
     ] = round(
 
@@ -813,14 +809,14 @@ def fallback_ranker(
 
     candidate[
 
-        "token_quality"
+        "token_quality_score"
 
     ] = 1.0
 
 
     candidate[
 
-        "readability"
+        "readability_score"
 
     ] = round(
 
@@ -972,12 +968,120 @@ def apply_ranker(
     # Use real candidate ranker
     # --------------------------------------------------------
 
-    if calculate_rank_score is not None:
+    if rank_candidate is not None:
 
         try:
-            calculate_rank_score(
-                candidate
+
+            text = candidate.get(
+
+                "text",
+
+                ""
+
             )
+
+
+            confidence = candidate.get(
+
+                "confidence",
+
+                0.0
+
+            )
+
+
+            # ------------------------------------------------
+            # Get final ranking score
+            # ------------------------------------------------
+
+            result = rank_candidate(
+
+                text,
+
+                confidence
+
+            )
+
+
+            # ------------------------------------------------
+            # IMPORTANT:
+            # rank_candidate returns a number
+            # ------------------------------------------------
+
+            if isinstance(
+
+                result,
+
+                (
+
+                    int,
+
+                    float
+
+                )
+
+            ):
+
+                candidate[
+
+                    "rank_score"
+
+                ] = float(
+
+                    result
+
+                )
+
+
+            # ------------------------------------------------
+            # Get detailed metrics
+            # ------------------------------------------------
+
+            if get_candidate_details is not None:
+
+                details = (
+
+                    get_candidate_details(
+
+                        text,
+
+                        confidence
+
+                    )
+
+                )
+
+
+                if isinstance(
+
+                    details,
+
+                    dict
+
+                ):
+
+                    candidate.update(
+
+                        details
+
+                    )
+
+
+                    # Keep rank_candidate's
+                    # final score authoritative
+
+                    candidate[
+
+                        "rank_score"
+
+                    ] = float(
+
+                        result
+
+                    )
+
+
+                return candidate
 
 
             return candidate
@@ -1204,339 +1308,7 @@ def process_candidates(
 # ============================================================
 # SELECT BEST CANDIDATE
 # ============================================================
-# ============================================================
-# OCR CONSENSUS / FUSION HELPERS
-# ============================================================
 
-import re
-from collections import Counter
-
-
-def normalize_ocr_text_for_comparison(text):
-    """
-    Normalize OCR text only for comparison.
-
-    This does NOT replace the original OCR text.
-    It is used to measure similarity between candidates.
-    """
-
-    if not text:
-        return ""
-
-    text = str(text)
-
-    # Normalize common OCR whitespace problems
-    text = text.replace("\r\n", "\n")
-    text = text.replace("\r", "\n")
-
-    # Collapse excessive spaces
-    text = re.sub(r"[ \t]+", " ", text)
-
-    # Collapse excessive blank lines
-    text = re.sub(r"\n{3,}", "\n\n", text)
-
-    return text.strip()
-
-
-def calculate_text_similarity(text_a, text_b):
-    """
-    Calculate a lightweight character/token similarity.
-
-    Returns:
-        float between 0.0 and 1.0
-    """
-
-    a = normalize_ocr_text_for_comparison(text_a)
-    b = normalize_ocr_text_for_comparison(text_b)
-
-    if not a or not b:
-        return 0.0
-
-    if a == b:
-        return 1.0
-
-    # Character-level similarity
-    from difflib import SequenceMatcher
-
-    char_similarity = SequenceMatcher(
-        None,
-        a,
-        b
-    ).ratio()
-
-    # Token-level similarity
-    tokens_a = set(a.split())
-    tokens_b = set(b.split())
-
-    if tokens_a or tokens_b:
-
-        intersection = len(
-            tokens_a.intersection(tokens_b)
-        )
-
-        union = len(
-            tokens_a.union(tokens_b)
-        )
-
-        token_similarity = (
-            intersection / union
-            if union
-            else 0.0
-        )
-
-    else:
-
-        token_similarity = 0.0
-
-    # Combined similarity
-    similarity = (
-        0.65 * char_similarity
-        +
-        0.35 * token_similarity
-    )
-
-    return max(
-        0.0,
-        min(
-            1.0,
-            similarity
-        )
-    )
-
-
-def calculate_candidate_consensus(
-    candidate,
-    candidates
-):
-    """
-    Measure how much a candidate agrees
-    with the other OCR candidates.
-    """
-
-    if not candidates:
-        return 0.0
-
-    candidate_text = candidate.get(
-        "text",
-        ""
-    )
-
-    if not candidate_text:
-        return 0.0
-
-    similarities = []
-
-    for other in candidates:
-
-        if other is candidate:
-            continue
-
-        other_text = other.get(
-            "text",
-            ""
-        )
-
-        similarity = calculate_text_similarity(
-            candidate_text,
-            other_text
-        )
-
-        similarities.append(
-            similarity
-        )
-
-    if not similarities:
-        return 0.0
-
-    return sum(
-        similarities
-    ) / len(
-        similarities
-    )
-
-
-def calculate_final_candidate_score(
-    candidate,
-    candidates
-):
-    """
-    Combine the existing rank score with
-    OCR consensus.
-
-    Existing ranker remains important,
-    but consensus prevents blindly selecting
-    one noisy OCR result.
-    """
-
-    rank_score = float(
-        candidate.get(
-            "rank_score",
-            0.0
-        )
-    )
-
-    consensus_score = (
-        calculate_candidate_consensus(
-            candidate,
-            candidates
-        )
-    )
-
-    confidence = float(
-        candidate.get(
-            "confidence",
-            0.0
-        )
-    )
-
-    # Convert percentage confidence to 0-1
-    if confidence > 1.0:
-        confidence = confidence / 100.0
-
-    confidence = max(
-        0.0,
-        min(
-            1.0,
-            confidence
-        )
-    )
-
-    # New combined score
-    final_score = (
-        0.55 * rank_score
-        +
-        0.30 * consensus_score
-        +
-        0.15 * confidence
-    )
-
-    return max(
-        0.0,
-        min(
-            1.0,
-            final_score
-        )
-    )
-
-
-def rerank_with_consensus(
-    candidates
-):
-    """
-    Re-rank OCR candidates using:
-        1. Existing rank score
-        2. Consensus with other OCR outputs
-        3. OCR confidence
-    """
-
-    if not candidates:
-        return []
-
-    updated_candidates = []
-
-    for candidate in candidates:
-
-        candidate_copy = dict(
-            candidate
-        )
-
-        consensus_score = (
-            calculate_candidate_consensus(
-                candidate_copy,
-                candidates
-            )
-        )
-
-        final_score = (
-            calculate_final_candidate_score(
-                candidate_copy,
-                candidates
-            )
-        )
-
-        candidate_copy[
-            "consensus_score"
-        ] = consensus_score
-
-        candidate_copy[
-            "final_ensemble_score"
-        ] = final_score
-
-        updated_candidates.append(
-            candidate_copy
-        )
-
-    updated_candidates.sort(
-
-        key=lambda candidate:
-            candidate.get(
-                "final_ensemble_score",
-                0.0
-            ),
-
-        reverse=True
-    )
-
-    return updated_candidates
-
-
-def print_consensus_candidates(
-    candidates,
-    limit=5
-):
-    """
-    Print candidates after consensus reranking.
-    """
-
-    print()
-
-    print(
-        "-" * 60
-    )
-
-    print(
-        "TOP OCR CANDIDATES AFTER CONSENSUS"
-    )
-
-    print(
-        "-" * 60
-    )
-
-    for index, candidate in enumerate(
-
-        candidates[:limit],
-
-        start=1
-
-    ):
-
-        print(
-
-            f"{index}. "
-
-            f"{candidate.get('method', 'Unknown')} "
-
-            f"| PSM "
-
-            f"{candidate.get('psm', '?')} "
-
-            f"| Confidence "
-
-            f"{candidate.get('confidence', 0.0):.2f}% "
-
-            f"| Rank "
-
-            f"{candidate.get('rank_score', 0.0):.4f} "
-
-            f"| Consensus "
-
-            f"{candidate.get('consensus_score', 0.0):.4f} "
-
-            f"| Final "
-
-            f"{candidate.get('final_ensemble_score', 0.0):.4f}"
-
-        )
 def select_best_candidate(
 
     candidates
@@ -1626,7 +1398,7 @@ def print_candidate_details(
 
         f"Code Quality     : "
 
-        f"{candidate.get('code_quality', 0.0):.4f}"
+        f"{candidate.get('code_quality_score', 0.0):.4f}"
 
     )
 
@@ -1644,7 +1416,7 @@ def print_candidate_details(
 
         f"Token Quality     : "
 
-        f"{candidate.get('token_quality', 0.0):.4f}"
+        f"{candidate.get('token_quality_score', 0.0):.4f}"
 
     )
 
@@ -1653,7 +1425,7 @@ def print_candidate_details(
 
         f"Readability       : "
 
-        f"{candidate.get('readability', 0.0):.4f}"
+        f"{candidate.get('readability_score', 0.0):.4f}"
 
     )
 
@@ -1888,7 +1660,7 @@ def run_ensemble_ocr(
             )
 
 
-            candidate = apply_ranker(
+            candidate = fallback_ranker(
 
                 candidate
 
@@ -1903,18 +1675,17 @@ def run_ensemble_ocr(
 
 
     # --------------------------------------------------------
-    # Consensus-based ensemble reranking
+    # Select best
     # --------------------------------------------------------
 
-    consensus_candidates = rerank_with_consensus(
-        processed_candidates
-    )
-
-    # Select best candidate after consensus reranking
     best_candidate = (
-        consensus_candidates[0]
-        if consensus_candidates
-        else None
+
+        select_best_candidate(
+
+            processed_candidates
+
+        )
+
     )
 
 
@@ -1932,14 +1703,22 @@ def run_ensemble_ocr(
     # --------------------------------------------------------
 
     sorted_candidates = sorted(
-    consensus_candidates,
-    key=lambda candidate:
-        candidate.get(
-            "final_ensemble_score",
-            0.0
-        ),
-    reverse=True
-)
+
+        processed_candidates,
+
+        key=lambda candidate:
+
+            candidate.get(
+
+                "rank_score",
+
+                0.0
+
+            ),
+
+        reverse=True
+
+    )
 
 
     # ========================================================
@@ -1987,15 +1766,7 @@ def run_ensemble_ocr(
         best_candidate
 
     )
-    print(
-        f"Consensus Score  : "
-        f"{best_candidate.get('consensus_score', 0.0):.4f}"
-    )
 
-    print(
-        f"Final Ensemble Score : "
-        f"{best_candidate.get('final_ensemble_score', 0.0):.4f}"
-    )
 
     # ========================================================
     # TOP 3

@@ -1,96 +1,76 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from pathlib import Path
-import shutil
-import uuid
+from __future__ import annotations
 
-from app.ocr.extractor import extract_text_from_image
-from app.core.answer_parser import parse_answers
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-
-router = APIRouter(
-    prefix="/api",
-    tags=["Answer Sheet"]
-)
+from app.evaluation.deterministic_evaluator import evaluate_answers
+from app.feedback.feedback_generator import generate_feedback
+from app.ocr.extractor import extract_document
+from app.ocr.input_handler import InputValidationError, cleanup_path, save_upload_file
+from app.parser.answer_parser import parse_ocr_result
 
 
-UPLOAD_DIR = Path("temp_uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
+router = APIRouter(prefix="/api", tags=["Answer Sheet"])
 
 
 @router.post("/upload")
 async def upload_answer_sheet(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    expected_answer: str | None = Form(default=None),
+    maximum_score: float = Form(default=10.0),
 ):
-    """
-    Upload an answer sheet image,
-    extract text using OCR,
-    and parse questions and answers.
-    """
-
-    # Allowed file types
-    allowed_extensions = {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".pdf"
-    }
-
-    file_extension = Path(file.filename).suffix.lower()
-
-    if file_extension not in allowed_extensions:
-        raise HTTPException(
-            status_code=400,
-            detail="Only JPG, JPEG, PNG, and PDF files are supported."
-        )
-
-    # Generate unique filename
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
-
-    file_path = UPLOAD_DIR / unique_filename
+    saved_path = None
 
     try:
+        saved_path = save_upload_file(file)
 
-        # Save uploaded file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        # Currently OCR image processing
-        # PDF support can be connected separately
-        if file_extension == ".pdf":
-            raise HTTPException(
-                status_code=501,
-                detail="PDF OCR processing will be added next."
-            )
-
-        # Extract text using OCR
-        extracted_text = extract_text_from_image(
-            str(file_path)
+        ocr_result = extract_document(saved_path)
+        parsed_answers = parse_ocr_result(ocr_result)
+        evaluation = evaluate_answers(
+            parsed_answers,
+            expected_answer=expected_answer,
+            maximum_score=maximum_score,
         )
-
-        # Parse questions and answers
-        parsed_answers = parse_answers(
-            extracted_text
-        )
+        feedback = generate_feedback(evaluation)
 
         return {
             "success": True,
             "filename": file.filename,
-            "questions_count": len(parsed_answers),
-            "questions": parsed_answers
+            "ocr": ocr_result.model_dump(),
+            "parsed_answers": parsed_answers,
+            "evaluation": evaluation,
+            "feedback": feedback,
         }
 
-    except HTTPException:
-        raise
+    except InputValidationError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
-    except Exception as e:
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Processing failed: {str(e)}"
-        )
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Processing failed: {error}") from error
 
     finally:
+        if saved_path is not None:
+            cleanup_path(saved_path)
 
-        # Delete temporary file
-        if file_path.exists():
-            file_path.unlink()
+
+@router.post("/ocr")
+async def ocr_only(file: UploadFile = File(...)):
+    saved_path = None
+
+    try:
+        saved_path = save_upload_file(file)
+        ocr_result = extract_document(saved_path)
+        return {
+            "success": True,
+            "filename": file.filename,
+            "ocr": ocr_result.model_dump(),
+        }
+
+    except InputValidationError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"OCR failed: {error}") from error
+
+    finally:
+        if saved_path is not None:
+            cleanup_path(saved_path)

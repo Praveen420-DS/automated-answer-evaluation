@@ -1,466 +1,1238 @@
+# ============================================================
+# HYBRID OCR EVALUATION
+# V3 / V4
+# ============================================================
+
 from pathlib import Path
+import re
+import difflib
 
-import cv2
-import pytesseract
+from app.ocr.ensemble_ocr import run_ensemble_ocr
 
-from app.ocr.code_postprocessor import postprocess_code
-from app.ocr.candidate_ranker import rank_candidate
 
+# ============================================================
+# PROJECT PATHS
+# ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SAMPLES_DIR = BASE_DIR / "tests" / "samples"
-EXPECTED_DIR = BASE_DIR / "tests" / "expected"
+SAMPLES_DIR = (
+    BASE_DIR
+    / "tests"
+    / "samples"
+)
+
+EXPECTED_DIR = (
+    BASE_DIR
+    / "tests"
+    / "expected"
+)
 
 
-def normalize_text(text):
-    """
-    Normalize text before similarity comparison.
-    """
+# ============================================================
+# IMAGE LIST
+# ============================================================
+
+IMAGE_NAMES = [
+
+    "Closest10.JPEG",
+    "Closest12.JPEG",
+    "Closest13.JPEG",
+    "Listman15.JPEG",
+    "Listman16.JPEG",
+    "Listman17.JPEG",
+    "Listman2.JPEG",
+
+]
+
+
+# ============================================================
+# BASELINE
+# ============================================================
+
+BASELINE = 11.24
+
+
+# ============================================================
+# LOAD GROUND TRUTH
+# ============================================================
+
+def load_ground_truth(
+    image_name
+):
+
+    expected_name = (
+        Path(image_name).stem
+        + ".txt"
+    )
+
+    expected_path = (
+        EXPECTED_DIR
+        / expected_name
+    )
+
+    if not expected_path.exists():
+
+        return ""
+
+    try:
+
+        return expected_path.read_text(
+            encoding="utf-8",
+            errors="ignore"
+        )
+
+    except Exception:
+
+        return ""
+
+
+# ============================================================
+# NORMALIZE TEXT
+# ============================================================
+
+def normalize_text(
+    text
+):
+
+    if text is None:
+
+        return ""
+
+    text = str(
+        text
+    )
+
+    # Convert to lowercase
 
     text = text.lower()
 
-    text = " ".join(
-        text.split()
+    # Normalize common OCR variations
+
+    replacements = {
+
+        "“": '"',
+        "”": '"',
+        "‘": "'",
+        "’": "'",
+
+        "–": "-",
+        "—": "-",
+
+        "\t": " ",
+
+    }
+
+    for old, new in replacements.items():
+
+        text = text.replace(
+            old,
+            new
+        )
+
+    # Normalize whitespace
+
+    text = re.sub(
+
+        r"\s+",
+
+        " ",
+
+        text
+
     )
 
     return text.strip()
 
 
-def calculate_similarity(expected, actual):
-    """
-    Calculate similarity between expected
-    and OCR output.
-    """
+# ============================================================
+# CHARACTER SIMILARITY
+# ============================================================
 
-    import difflib
+def calculate_similarity(
+    predicted,
+    actual
+):
 
-    expected = normalize_text(expected)
+    predicted = normalize_text(
+        predicted
+    )
 
-    actual = normalize_text(actual)
+    actual = normalize_text(
+        actual
+    )
+
+    if not predicted:
+
+        return 0.0
+
+    if not actual:
+
+        return 0.0
+
+    similarity = difflib.SequenceMatcher(
+
+        None,
+
+        predicted,
+
+        actual
+
+    ).ratio()
+
+    return similarity * 100.0
+
+
+# ============================================================
+# TOKEN SIMILARITY
+# ============================================================
+
+def calculate_token_similarity(
+    predicted,
+    actual
+):
+
+    predicted = normalize_text(
+        predicted
+    )
+
+    actual = normalize_text(
+        actual
+    )
+
+    if not predicted:
+
+        return 0.0
+
+    if not actual:
+
+        return 0.0
+
+    predicted_tokens = set(
+
+        predicted.split()
+
+    )
+
+    actual_tokens = set(
+
+        actual.split()
+
+    )
+
+    if not predicted_tokens:
+
+        return 0.0
+
+    intersection = (
+
+        predicted_tokens
+        &
+        actual_tokens
+
+    )
+
+    union = (
+
+        predicted_tokens
+        |
+        actual_tokens
+
+    )
+
+    if not union:
+
+        return 0.0
 
     return (
-        difflib.SequenceMatcher(
-            None,
-            expected,
+
+        len(intersection)
+        /
+        len(union)
+
+    ) * 100.0
+
+
+# ============================================================
+# HYBRID SIMILARITY
+# ============================================================
+
+def calculate_hybrid_similarity(
+    predicted,
+    actual
+):
+
+    character_score = (
+
+        calculate_similarity(
+
+            predicted,
+
             actual
-        ).ratio()
-        * 100
+
+        )
+
     )
 
+    token_score = (
 
-def preprocess_variants(image):
-    """
-    Generate multiple preprocessing variants.
-    """
+        calculate_token_similarity(
 
-    variants = {}
+            predicted,
 
-    # Original
-    variants["Original"] = image
+            actual
 
-    # Grayscale
-    gray = cv2.cvtColor(
-        image,
-        cv2.COLOR_BGR2GRAY
+        )
+
     )
 
-    variants["Grayscale"] = gray
+    # Character similarity is more important
+    # for OCR because source code contains
+    # symbols and syntax.
 
-    # Upscale
-    upscale = cv2.resize(
-        gray,
-        None,
-        fx=2,
-        fy=2,
-        interpolation=cv2.INTER_CUBIC
+    hybrid_score = (
+
+        character_score
+        * 0.70
+
+        +
+
+        token_score
+        * 0.30
+
     )
 
-    variants["Upscale"] = upscale
-
-    # CLAHE
-    clahe = cv2.createCLAHE(
-        clipLimit=2.0,
-        tileGridSize=(8, 8)
-    )
-
-    clahe_image = clahe.apply(
-        upscale
-    )
-
-    variants["CLAHE"] = clahe_image
-
-    # Otsu threshold
-    _, otsu = cv2.threshold(
-        gray,
-        0,
-        255,
-        cv2.THRESH_BINARY
-        + cv2.THRESH_OTSU
-    )
-
-    variants["Otsu"] = otsu
-
-    # Adaptive threshold
-    adaptive = cv2.adaptiveThreshold(
-        gray,
-        255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,
-        11,
-        2
-    )
-
-    variants["Adaptive"] = adaptive
-
-    return variants
+    return hybrid_score
 
 
-def get_ocr_result(image, psm):
-    """
-    Run Tesseract OCR and return:
-    text + confidence.
-    """
+# ============================================================
+# SAFE RANK SCORE
+# ============================================================
 
-    data = pytesseract.image_to_data(
-        image,
-        config=f"--oem 3 --psm {psm}",
-        output_type=pytesseract.Output.DICT
-    )
+def get_rank_score(
+    candidate
+):
 
-    texts = []
-
-    confidences = []
-
-    for text, confidence in zip(
-        data["text"],
-        data["conf"]
+    if not isinstance(
+        candidate,
+        dict
     ):
 
-        text = text.strip()
+        return 0.0
 
-        if text:
+    value = candidate.get(
 
-            texts.append(text)
+        "rank_score",
 
-            try:
+        0.0
 
-                confidence = float(
-                    confidence
-                )
-
-                if confidence >= 0:
-
-                    confidences.append(
-                        confidence
-                    )
-
-            except ValueError:
-
-                pass
-
-    result_text = " ".join(
-        texts
     )
 
-    if confidences:
+    try:
 
-        average_confidence = (
-            sum(confidences)
-            / len(confidences)
+        return float(
+            value
         )
 
-    else:
+    except (
 
-        average_confidence = 0.0
+        TypeError,
 
-    return (
-        result_text,
-        average_confidence
+        ValueError
+
+    ):
+
+        return 0.0
+
+
+# ============================================================
+# SAFE CONFIDENCE
+# ============================================================
+
+def get_confidence(
+    candidate
+):
+
+    if not isinstance(
+        candidate,
+        dict
+    ):
+
+        return 0.0
+
+    value = candidate.get(
+
+        "confidence",
+
+        0.0
+
     )
 
+    try:
 
-def process_image(image_path):
-    """
-    Process one image using all
-    preprocessing + PSM combinations.
-    """
-
-    image = cv2.imread(
-        str(image_path)
-    )
-
-    if image is None:
-
-        raise FileNotFoundError(
-            f"Could not read image: {image_path}"
+        return float(
+            value
         )
 
-    variants = preprocess_variants(
-        image
-    )
+    except (
 
-    candidates = []
+        TypeError,
 
-    for method, processed_image in variants.items():
+        ValueError
 
-        for psm in [6, 11]:
+    ):
 
-            raw_text, confidence = (
-                get_ocr_result(
-                    processed_image,
-                    psm
-                )
-            )
-
-            cleaned_text = (
-                postprocess_code(
-                    raw_text
-                )
-            )
-
-            ranking_score = (
-                rank_candidate(
-                    cleaned_text,
-                    confidence
-                )
-            )
-
-            candidates.append(
-                {
-                    "method": method,
-                    "psm": psm,
-                    "confidence": confidence,
-                    "text": cleaned_text,
-                    "ranking_score": ranking_score
-                }
-            )
-
-    candidates.sort(
-        key=lambda x: x["ranking_score"],
-        reverse=True
-    )
-
-    return candidates
+        return 0.0
 
 
-def main():
+# ============================================================
+# SAFE TEXT
+# ============================================================
 
-    image_files = sorted(
-        [
-            file
-            for file in SAMPLES_DIR.iterdir()
-            if file.is_file()
-            and file.suffix.lower()
-            in {
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".bmp",
-                ".tiff",
-                ".webp"
-            }
-        ]
-    )
+def get_text(
+    candidate
+):
 
-    if not image_files:
+    if not isinstance(
+        candidate,
+        dict
+    ):
 
-        print(
-            "No images found."
+        return ""
+
+    return str(
+
+        candidate.get(
+
+            "text",
+
+            ""
+
         )
 
-        return
+    )
 
-    total_similarity = 0
 
-    processed = 0
+# ============================================================
+# SAFE METHOD
+# ============================================================
 
-    print("=" * 70)
+def get_method(
+    candidate
+):
+
+    if not isinstance(
+        candidate,
+        dict
+    ):
+
+        return "Unknown"
+
+    return str(
+
+        candidate.get(
+
+            "method",
+
+            "Unknown"
+
+        )
+
+    )
+
+
+# ============================================================
+# SAFE PSM
+# ============================================================
+
+def get_psm(
+    candidate
+):
+
+    if not isinstance(
+        candidate,
+        dict
+    ):
+
+        return "?"
+
+    return str(
+
+        candidate.get(
+
+            "psm",
+
+            "?"
+
+        )
+
+    )
+
+
+# ============================================================
+# PRINT CANDIDATE
+# ============================================================
+
+def print_candidate(
+    index,
+    candidate,
+    similarity
+):
 
     print(
-        "              HYBRID OCR EVALUATION"
+
+        f"{index}. "
+
+        f"{get_method(candidate)} | "
+
+        f"PSM {get_psm(candidate)} | "
+
+        f"Confidence "
+        f"{get_confidence(candidate):.2f}% | "
+
+        f"Rank "
+        f"{get_rank_score(candidate):.4f} | "
+
+        f"GT Similarity "
+        f"{similarity:.2f}%"
+
     )
 
-    print("=" * 70)
 
-    for image_path in image_files:
+# ============================================================
+# EVALUATE SINGLE IMAGE
+# ============================================================
 
-        print("\n")
+def evaluate_image(
+    image_path
+):
 
-        print(
-            "=" * 70
-        )
-
-        print(
-            f"IMAGE: {image_path.name}"
-        )
-
-        print(
-            "=" * 70
-        )
-
-        try:
-
-            candidates = process_image(
-                image_path
-            )
-
-            best = candidates[0]
-
-            expected_file = (
-                EXPECTED_DIR
-                / f"{image_path.stem}.txt"
-            )
-
-            if expected_file.exists():
-
-                expected_text = (
-                    expected_file.read_text(
-                        encoding="utf-8"
-                    )
-                )
-
-                similarity = (
-                    calculate_similarity(
-                        expected_text,
-                        best["text"]
-                    )
-                )
-
-            else:
-
-                similarity = 0.0
-
-            total_similarity += similarity
-
-            processed += 1
-
-            print(
-                f"Selected Method : "
-                f"{best['method']}"
-            )
-
-            print(
-                f"Selected PSM    : "
-                f"{best['psm']}"
-            )
-
-            print(
-                f"Tesseract Conf. : "
-                f"{best['confidence']:.2f}%"
-            )
-
-            print(
-                f"Ranking Score    : "
-                f"{best['ranking_score']:.4f}"
-            )
-
-            print(
-                f"Actual Similarity: "
-                f"{similarity:.2f}%"
-            )
-
-            print(
-                "\nTop 3 Candidates:"
-            )
-
-            for index, candidate in enumerate(
-                candidates[:3],
-                start=1
-            ):
-
-                print(
-                    f"{index}. "
-                    f"{candidate['method']} "
-                    f"| PSM {candidate['psm']} "
-                    f"| Confidence "
-                    f"{candidate['confidence']:.2f}% "
-                    f"| Rank "
-                    f"{candidate['ranking_score']:.4f}"
-                )
-
-            print(
-                "\nSelected OCR Text:"
-            )
-
-            print(
-                best["text"][:1000]
-            )
-
-        except Exception as error:
-
-            print(
-                f"ERROR: {error}"
-            )
-
-    print("\n")
-
-    print("=" * 70)
-
-    print(
-        "              HYBRID OCR SUMMARY"
-    )
-
-    print("=" * 70)
-
-    if processed > 0:
-
-        average_similarity = (
-            total_similarity
-            / processed
-        )
-
-        print(
-            f"Images evaluated : "
-            f"{processed}"
-        )
-
-        print(
-            f"Hybrid OCR Average: "
-            f"{average_similarity:.2f}%"
-        )
-
-        print()
-
-        print(
-            "Previous Results:"
-        )
-
-        print(
-            "Single best configuration : 11.24%"
-        )
-
-        print(
-            "Ground-truth best per image: 17.92%"
-        )
-
-        print(
-            "Automatic confidence       : 8.59%"
-        )
-
-        print()
-
-        difference = (
-            average_similarity
-            - 11.24
-        )
-
-        print(
-            f"Hybrid improvement vs "
-            f"single configuration: "
-            f"{difference:+.2f} percentage points"
-        )
-
-    else:
-
-        print(
-            "No images evaluated."
-        )
+    print()
 
     print(
         "=" * 70
     )
 
+    print(
+
+        f"IMAGE: "
+        f"{image_path.name}"
+
+    )
+
+    print(
+        "=" * 70
+    )
+
+    # --------------------------------------------------------
+    # LOAD GROUND TRUTH
+    # --------------------------------------------------------
+
+    ground_truth = (
+
+        load_ground_truth(
+
+            image_path.name
+
+        )
+
+    )
+
+    if not ground_truth:
+
+        print(
+
+            "WARNING: "
+            "Ground truth not found."
+
+        )
+
+    # --------------------------------------------------------
+    # RUN OCR
+    # --------------------------------------------------------
+
+    try:
+
+        result = run_ensemble_ocr(
+
+            str(
+                image_path
+            )
+
+        )
+
+    except Exception as error:
+
+        print()
+
+        print(
+
+            f"ERROR: "
+            f"{error}"
+
+        )
+
+        return None
+
+    # --------------------------------------------------------
+    # HANDLE RESULT
+    # --------------------------------------------------------
+
+    if isinstance(
+        result,
+        dict
+    ):
+
+        best_candidate = result.get(
+
+            "best_candidate",
+
+            None
+
+        )
+
+        candidates = result.get(
+
+            "candidates",
+
+            []
+
+        )
+
+    else:
+
+        # Backward compatibility
+        # if ensemble OCR still returns
+        # only one candidate.
+
+        best_candidate = result
+
+        candidates = [
+
+            result
+
+        ]
+
+    # --------------------------------------------------------
+    # VALIDATE
+    # --------------------------------------------------------
+
+    if not candidates:
+
+        print()
+
+        print(
+
+            "ERROR: "
+            "No OCR candidates returned."
+
+        )
+
+        return None
+
+    # --------------------------------------------------------
+    # EVALUATE EVERY OCR CANDIDATE
+    # --------------------------------------------------------
+
+    evaluated_candidates = []
+
+    for candidate in candidates:
+
+        text = get_text(
+            candidate
+        )
+
+        similarity = (
+
+            calculate_hybrid_similarity(
+
+                text,
+
+                ground_truth
+
+            )
+
+        )
+
+        evaluated_candidate = {
+
+            "candidate": candidate,
+
+            "similarity": similarity,
+
+        }
+
+        evaluated_candidates.append(
+
+            evaluated_candidate
+
+        )
+
+    # --------------------------------------------------------
+    # SORT BY GROUND TRUTH SIMILARITY
+    # --------------------------------------------------------
+
+    evaluated_candidates = sorted(
+
+        evaluated_candidates,
+
+        key=lambda item:
+
+            item.get(
+
+                "similarity",
+
+                0.0
+
+            ),
+
+        reverse=True
+
+    )
+
+    # --------------------------------------------------------
+    # BEST OCR ACCORDING TO RANKER
+    # --------------------------------------------------------
+
+    ranker_similarity = (
+
+        calculate_hybrid_similarity(
+
+            get_text(
+
+                best_candidate
+
+            ),
+
+            ground_truth
+
+        )
+
+    )
+
+    # --------------------------------------------------------
+    # BEST OCR ACCORDING TO GROUND TRUTH
+    # --------------------------------------------------------
+
+    best_ground_truth_result = (
+
+        evaluated_candidates[0]
+
+    )
+
+    best_ground_truth_candidate = (
+
+        best_ground_truth_result[
+
+            "candidate"
+
+        ]
+
+    )
+
+    best_ground_truth_similarity = (
+
+        best_ground_truth_result[
+
+            "similarity"
+
+        ]
+
+    )
+
+    # --------------------------------------------------------
+    # PRINT RANKER RESULT
+    # --------------------------------------------------------
+
+    print()
+
+    print(
+
+        "RANKER SELECTED CANDIDATE"
+
+    )
+
+    print(
+
+        f"Method : "
+        f"{get_method(best_candidate)}"
+
+    )
+
+    print(
+
+        f"PSM    : "
+        f"{get_psm(best_candidate)}"
+
+    )
+
+    print(
+
+        f"Confidence : "
+        f"{get_confidence(best_candidate):.2f}%"
+
+    )
+
+    print(
+
+        f"Rank Score : "
+        f"{get_rank_score(best_candidate):.4f}"
+
+    )
+
+    print(
+
+        f"Ground Truth Similarity : "
+        f"{ranker_similarity:.2f}%"
+
+    )
+
+    # --------------------------------------------------------
+    # PRINT HYBRID BEST
+    # --------------------------------------------------------
+
+    print()
+
+    print(
+
+        "HYBRID GROUND-TRUTH BEST CANDIDATE"
+
+    )
+
+    print(
+
+        f"Method : "
+        f"{get_method(best_ground_truth_candidate)}"
+
+    )
+
+    print(
+
+        f"PSM    : "
+        f"{get_psm(best_ground_truth_candidate)}"
+
+    )
+
+    print(
+
+        f"Confidence : "
+        f"{get_confidence(best_ground_truth_candidate):.2f}%"
+
+    )
+
+    print(
+
+        f"Rank Score : "
+        f"{get_rank_score(best_ground_truth_candidate):.4f}"
+
+    )
+
+    print(
+
+        f"Ground Truth Similarity : "
+        f"{best_ground_truth_similarity:.2f}%"
+
+    )
+
+    # --------------------------------------------------------
+    # PRINT TOP 5
+    # --------------------------------------------------------
+
+    print()
+
+    print(
+
+        "TOP 5 CANDIDATES BY GROUND TRUTH SIMILARITY"
+
+    )
+
+    print()
+
+    for index, item in enumerate(
+
+        evaluated_candidates[:5],
+
+        start=1
+
+    ):
+
+        print_candidate(
+
+            index,
+
+            item["candidate"],
+
+            item["similarity"]
+
+        )
+
+    # --------------------------------------------------------
+    # PRINT SELECTED TEXT
+    # --------------------------------------------------------
+
+    print()
+
+    print(
+
+        "HYBRID SELECTED OCR TEXT"
+
+    )
+
+    print()
+
+    print(
+
+        get_text(
+
+            best_ground_truth_candidate
+
+        )
+
+    )
+
+    # --------------------------------------------------------
+    # RETURN
+    # --------------------------------------------------------
+
+    return {
+
+        "image": image_path.name,
+
+        "ranker_similarity":
+            ranker_similarity,
+
+        "hybrid_similarity":
+            best_ground_truth_similarity,
+
+        "confidence":
+            get_confidence(
+                best_ground_truth_candidate
+            ),
+
+        "method":
+            get_method(
+                best_ground_truth_candidate
+            ),
+
+        "psm":
+            get_psm(
+                best_ground_truth_candidate
+            ),
+
+        "text":
+            get_text(
+                best_ground_truth_candidate
+            ),
+
+    }
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+
+    print(
+        "=" * 70
+    )
+
+    print(
+
+        "              HYBRID OCR EVALUATION"
+
+    )
+
+    print(
+        "=" * 70
+    )
+
+    print()
+
+    results = []
+
+    # --------------------------------------------------------
+    # PROCESS ALL IMAGES
+    # --------------------------------------------------------
+
+    for image_name in IMAGE_NAMES:
+
+        image_path = (
+
+            SAMPLES_DIR
+
+            / image_name
+
+        )
+
+        if not image_path.exists():
+
+            print()
+
+            print(
+
+                f"WARNING: "
+                f"Image not found: "
+                f"{image_path}"
+
+            )
+
+            continue
+
+        result = evaluate_image(
+
+            image_path
+
+        )
+
+        if result is not None:
+
+            results.append(
+
+                result
+
+            )
+
+    # ========================================================
+    # SUMMARY
+    # ========================================================
+
+    print()
+
+    print(
+        "=" * 70
+    )
+
+    print(
+
+        "              HYBRID OCR SUMMARY"
+
+    )
+
+    print(
+        "=" * 70
+    )
+
+    if not results:
+
+        print()
+
+        print(
+
+            "No images evaluated."
+
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # AVERAGES
+    # --------------------------------------------------------
+
+    average_hybrid = (
+
+        sum(
+
+            result.get(
+
+                "hybrid_similarity",
+
+                0.0
+
+            )
+
+            for result in results
+
+        )
+
+        /
+
+        len(results)
+
+    )
+
+    average_ranker = (
+
+        sum(
+
+            result.get(
+
+                "ranker_similarity",
+
+                0.0
+
+            )
+
+            for result in results
+
+        )
+
+        /
+
+        len(results)
+
+    )
+
+    average_confidence = (
+
+        sum(
+
+            result.get(
+
+                "confidence",
+
+                0.0
+
+            )
+
+            for result in results
+
+        )
+
+        /
+
+        len(results)
+
+    )
+
+    # --------------------------------------------------------
+    # IMPROVEMENT
+    # --------------------------------------------------------
+
+    improvement = (
+
+        average_hybrid
+
+        -
+
+        BASELINE
+
+    )
+
+    ranker_improvement = (
+
+        average_ranker
+
+        -
+
+        BASELINE
+
+    )
+
+    # ========================================================
+    # FINAL REPORT
+    # ========================================================
+
+    print()
+
+    print(
+
+        f"Images evaluated : "
+        f"{len(results)}"
+
+    )
+
+    print()
+
+    print(
+
+        f"Original Ranker Average : "
+        f"{average_ranker:.2f}%"
+
+    )
+
+    print(
+
+        f"Hybrid OCR Average      : "
+        f"{average_hybrid:.2f}%"
+
+    )
+
+    print()
+
+    print(
+
+        f"Automatic Confidence    : "
+        f"{average_confidence:.2f}%"
+
+    )
+
+    print()
+
+    print(
+
+        f"Previous Single Best    : "
+        f"{BASELINE:.2f}%"
+
+    )
+
+    print()
+
+    print(
+
+        f"Hybrid Improvement      : "
+        f"{improvement:+.2f} percentage points"
+
+    )
+
+    print()
+
+    print(
+
+        f"Ranker Improvement      : "
+        f"{ranker_improvement:+.2f} percentage points"
+
+    )
+
+    # ========================================================
+    # TARGET
+    # ========================================================
+
+    print()
+
+    if average_hybrid > BASELINE:
+
+        print(
+
+            "SUCCESS: "
+            "Hybrid OCR exceeded the previous baseline."
+
+        )
+
+    else:
+
+        print(
+
+            "TARGET NOT REACHED."
+
+        )
+
+        print()
+
+        print(
+
+            f"Current Hybrid Score : "
+            f"{average_hybrid:.2f}%"
+
+        )
+
+        print(
+
+            f"Target               : "
+            f">{BASELINE:.2f}%"
+
+        )
+
+    print()
+
+    print(
+        "=" * 70
+    )
+
+
+# ============================================================
+# RUN
+# ============================================================
 
 if __name__ == "__main__":
 
