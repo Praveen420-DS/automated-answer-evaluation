@@ -1,3 +1,0 @@
-from werkzeug.security import generate_password_hash,check_password_hash
-hash_password=generate_password_hash
-verify_password=check_password_hash
