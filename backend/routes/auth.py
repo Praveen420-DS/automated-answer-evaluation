@@ -173,6 +173,6 @@ def profile():
         "success": True,
         "user": {
             "id": str(user["_id"]), "username": user.get("username") or user.get("fullName"),
-            "fullName": user.get("fullName"), "email": user["email"], "role": user["role"],
+            "fullName": user.get("fullName"), "email": user["email"], "role": user["role"], "photo": user.get("photo", ""),
         },
     })

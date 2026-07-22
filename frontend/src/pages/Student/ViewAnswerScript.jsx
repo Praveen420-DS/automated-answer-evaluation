@@ -12,6 +12,7 @@ import {
 export default function Transcript() {
 
   const [transcript, setTranscript] = useState(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     loadTranscript();
@@ -36,7 +37,7 @@ export default function Transcript() {
 
     } catch {
 
-      toast.error("Unable to load transcript");
+      setFailed(true); toast.error("Unable to load transcript");
 
     }
 
@@ -53,7 +54,7 @@ export default function Transcript() {
   if (!transcript)
     return (
       <div className="min-h-screen flex justify-center items-center">
-        Loading...
+        {failed ? "Transcript is unavailable. Please try again later." : "Loading..."}
       </div>
     );
 

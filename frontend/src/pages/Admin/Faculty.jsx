@@ -11,12 +11,15 @@ import {
   Download,
   RefreshCw,
 } from "lucide-react";
+import AdminUserModal from "../../components/AdminUserModal";
 
 export default function Faculty() {
 
   const [faculty, setFaculty] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   useEffect(() => {
     loadFaculty();
@@ -147,7 +150,7 @@ export default function Faculty() {
 
           <div className="flex gap-5">
 
-            <div className="relative flex-1">
+            <div className="admin-directory-search relative flex-1">
 
               <Search className="absolute left-4 top-4 text-gray-400"/>
 
@@ -161,7 +164,7 @@ export default function Faculty() {
 
             </div>
 
-            <button className="bg-indigo-600 text-white px-6 rounded-xl flex gap-2 items-center">
+            <button onClick={() => setAdding(true)} className="bg-indigo-600 text-white px-6 rounded-xl flex gap-2 items-center">
 
               <Plus size={18}/>
 
@@ -230,7 +233,7 @@ export default function Faculty() {
 
                     <div className="flex gap-4">
 
-                      <button className="text-indigo-600">
+                      <button onClick={() => setEditing(teacher)} className="text-indigo-600" title="Edit faculty details">
 
                         <Edit/>
 
@@ -270,6 +273,8 @@ export default function Faculty() {
 
       </div>
 
+      {adding && <AdminUserModal role="faculty" onClose={() => setAdding(false)} onCreated={loadFaculty} />}
+      {editing && <AdminUserModal role="faculty" user={editing} onClose={() => setEditing(null)} onCreated={loadFaculty} />}
     </div>
 
   );

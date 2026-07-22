@@ -16,6 +16,7 @@ export default function StudentResult() {
   const { examId } = useParams();
 
   const [result, setResult] = useState(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     loadResult();
@@ -36,11 +37,11 @@ export default function StudentResult() {
         }
       );
 
-      setResult(res.data);
+      setResult(res.data.data);
 
     } catch {
 
-      toast.error("Unable to load result");
+      setFailed(true); toast.error("Unable to load result");
 
     }
 
@@ -57,7 +58,7 @@ export default function StudentResult() {
   if (!result)
     return (
       <div className="min-h-screen flex justify-center items-center">
-        Loading...
+        {failed ? "Result is unavailable. Please try again later." : "Loading..."}
       </div>
     );
 
@@ -192,7 +193,7 @@ export default function StudentResult() {
 
           <div className="space-y-8 mt-8">
 
-            {result.questions.map((question) => (
+            {(result.questions || []).map((question) => (
 
               <div
                 key={question.questionNo}

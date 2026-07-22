@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import toast from "react-hot-toast";
 import {
   FileText,
@@ -7,6 +7,7 @@ import {
   Archive,
   FileSpreadsheet,
   RefreshCw,
+  Inbox,
 } from "lucide-react";
 
 export default function DownloadReport() {
@@ -22,22 +23,17 @@ export default function DownloadReport() {
 
     try {
 
-      const token = localStorage.getItem("token");
+      const res = await api.get("/student/reports");
 
-      const res = await axios.get(
-        "http://127.0.0.1:5000/api/student/reports",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      setReports(Array.isArray(res.data.reports) ? res.data.reports : []);
 
-      setReports(res.data.reports);
-
-    } catch {
-
-      toast.error("Unable to load reports");
+    } catch (error) {
+      // No uploaded/evaluated reports is a normal empty state, not an error.
+      if (error.response?.status === 404) {
+        setReports([]);
+      } else {
+        toast.error("Unable to load reports");
+      }
 
     } finally {
 
@@ -47,28 +43,12 @@ export default function DownloadReport() {
 
   };
 
-  const downloadReport = (examId) => {
-    window.open(
-      `http://127.0.0.1:5000/api/student/report/${examId}`
-    );
-  };
-
-  const downloadTranscript = () => {
-    window.open(
-      "http://127.0.0.1:5000/api/student/transcript/pdf"
-    );
-  };
-
-  const downloadSummary = () => {
-    window.open(
-      "http://127.0.0.1:5000/api/student/summary/pdf"
-    );
-  };
-
-  const downloadAll = () => {
-    window.open(
-      "http://127.0.0.1:5000/api/student/reports/zip"
-    );
+  const downloadReport = async (evaluationId) => {
+    try {
+      const response = await api.get(`/student/download/${evaluationId}`, { responseType: "blob" });
+      const url = URL.createObjectURL(response.data); const link = document.createElement("a");
+      link.href = url; link.download = "evaluation-report.pdf"; link.click(); URL.revokeObjectURL(url);
+    } catch (error) { toast.error(error.response?.data?.message || "This report is not available yet."); }
   };
 
   return (
@@ -112,87 +92,22 @@ export default function DownloadReport() {
 
       <div className="max-w-7xl mx-auto py-8">
 
-        {/* Quick Downloads */}
-
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
-
-          <button
-            onClick={downloadTranscript}
-            className="bg-white rounded-2xl shadow p-8 hover:shadow-xl transition"
-          >
-
-            <FileText
-              className="text-indigo-600"
-              size={45}
-            />
-
-            <h2 className="mt-5 text-xl font-bold">
-
-              Transcript
-
-            </h2>
-
-            <p className="text-gray-500 mt-2">
-
-              Download Academic Transcript
-
+        {loading ? (
+          <div className="bg-white rounded-3xl shadow-lg py-20 text-center text-gray-500">
+            Loading reports...
+          </div>
+        ) : reports.length === 0 ? (
+          <div className="bg-white rounded-3xl shadow-lg py-20 px-6 text-center">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+              <Inbox size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-800">No reports available</h2>
+            <p className="mt-2 text-gray-500">
+              Your PDF reports will appear here once evaluation is complete.
             </p>
-
-          </button>
-
-          <button
-            onClick={downloadSummary}
-            className="bg-white rounded-2xl shadow p-8 hover:shadow-xl transition"
-          >
-
-            <FileSpreadsheet
-              className="text-green-600"
-              size={45}
-            />
-
-            <h2 className="mt-5 text-xl font-bold">
-
-              AI Summary
-
-            </h2>
-
-            <p className="text-gray-500 mt-2">
-
-              AI Evaluation Summary
-
-            </p>
-
-          </button>
-
-          <button
-            onClick={downloadAll}
-            className="bg-white rounded-2xl shadow p-8 hover:shadow-xl transition"
-          >
-
-            <Archive
-              className="text-orange-600"
-              size={45}
-            />
-
-            <h2 className="mt-5 text-xl font-bold">
-
-              Download All
-
-            </h2>
-
-            <p className="text-gray-500 mt-2">
-
-              ZIP File of All Reports
-
-            </p>
-
-          </button>
-
-        </div>
-
-        {/* Individual Reports */}
-
-        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
 
           <table className="w-full">
 
@@ -236,27 +151,10 @@ export default function DownloadReport() {
 
             <tbody>
 
-              {loading ? (
-
-                <tr>
-
-                  <td
-                    colSpan="5"
-                    className="text-center py-10"
-                  >
-
-                    Loading...
-
-                  </td>
-
-                </tr>
-
-              ) : (
-
-                reports.map((report) => (
+              {reports.map((report) => (
 
                   <tr
-                    key={report.examId}
+                    key={report.id}
                     className="border-b hover:bg-gray-50"
                   >
 
@@ -288,7 +186,7 @@ export default function DownloadReport() {
 
                       <button
                         onClick={() =>
-                          downloadReport(report.examId)
+                          downloadReport(report.id)
                         }
                         className="text-indigo-600"
                       >
@@ -301,15 +199,14 @@ export default function DownloadReport() {
 
                   </tr>
 
-                ))
-
-              )}
+                ))}
 
             </tbody>
 
           </table>
 
-        </div>
+          </div>
+        )}
 
       </div>
 

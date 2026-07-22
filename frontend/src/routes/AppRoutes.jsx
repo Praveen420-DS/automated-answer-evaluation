@@ -20,6 +20,7 @@ import MyResults from '../pages/Student/Result';
 import ViewAnswerSheet from '../pages/Student/ViewAnswerScript';
 import Transcript from '../pages/Student/Transcript';
 import DownloadReport from '../pages/Student/DownloadReport';
+import HelpSupport from '../pages/Student/HelpSupport';
 import StudentProfile from '../pages/Student/Profile';
 import StudentResult from '../pages/Student/StudentResult';
 import NotFound from '../pages/Error/NotFound';
@@ -57,6 +58,7 @@ export default function AppRoutes() {
     <Route path="/student/answer-sheet" element={<ProtectedRoute role="student"><ViewAnswerSheet /></ProtectedRoute>} />
     <Route path="/student/transcript" element={<ProtectedRoute role="student"><Transcript /></ProtectedRoute>} />
     <Route path="/student/download-report" element={<ProtectedRoute role="student"><DownloadReport /></ProtectedRoute>} />
+    <Route path="/student/help" element={<ProtectedRoute role="student"><HelpSupport /></ProtectedRoute>} />
     <Route path="/student/profile" element={<ProtectedRoute role="student"><StudentProfile /></ProtectedRoute>} />
     <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
     <Route path="/admin/students" element={<ProtectedRoute role="admin"><AdminStudents /></ProtectedRoute>} />

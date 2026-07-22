@@ -1,5 +1,9 @@
-from flask import Blueprint, jsonify, request
-from services.upload_service import save_upload
-bp=Blueprint('upload',__name__,url_prefix='/api/uploads')
-@bp.post('/')
-def upload(): return jsonify(save_upload(request.files.get('file')))
+from flask import Blueprint
+from controllers.upload_controller import upload_answer_script
+
+upload_bp = Blueprint("upload", __name__)
+
+upload_bp.route(
+    "/answer-script",
+    methods=["POST"]
+)(upload_answer_script)

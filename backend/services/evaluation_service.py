@@ -1,66 +1,33 @@
-from datetime import datetime
-
-from database.mongodb import (
-    answer_keys_collection,
-    evaluations_collection
-)
-
-from ai.evaluator import evaluator
+from database.mongodb import db
+from bson import ObjectId
 
 
-class EvaluationService:
+def latest_evaluation():
 
-    def __init__(self):
-        pass
+    result = db.evaluations.find_one(
+        {},
+        sort=[("_id", -1)]
+    )
 
-    # ==========================================
-    # Evaluate Student Answer
-    # ==========================================
+    if not result:
+        return None
 
-    def evaluate_answer(
+    result["_id"] = str(result["_id"])
 
-        self,
-        answer_key_text,
-        student_answer_text,
-        total_marks,
-        student_name,
-        exam_name
+    return result
 
-    ):
 
-        result = evaluator.evaluate(
+def evaluation_by_id(result_id):
 
-            answer_key=answer_key_text,
-            student_answer=student_answer_text,
-            total_marks=total_marks
-
-        )
-
-        evaluation = {
-
-            "studentName": student_name,
-
-            "examName": exam_name,
-
-            "answerKey": answer_key_text,
-
-            "studentAnswer": student_answer_text,
-
-            "similarity": result["similarity"],
-
-            "marks": result["marks"],
-
-            "feedback": result["feedback"],
-
-            "evaluatedAt": datetime.utcnow()
-
+    result = db.evaluations.find_one(
+        {
+            "_id": ObjectId(result_id)
         }
+    )
 
-        evaluations_collection().insert_one(
-            evaluation
-        )
+    if not result:
+        return None
 
-        return evaluation
+    result["_id"] = str(result["_id"])
 
-
-evaluation_service = EvaluationService()
+    return result

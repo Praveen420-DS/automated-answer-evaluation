@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from bson import ObjectId
+from werkzeug.security import generate_password_hash
 
 from middleware.auth_middleware import admin_required
 
@@ -10,6 +11,25 @@ from database.mongodb import (
 )
 
 admin_bp = Blueprint("admin", __name__)
+
+@admin_bp.route("/user", methods=["POST"])
+@admin_required
+def create_user():
+    data = request.get_json(silent=True) or {}
+    full_name, email, password = (data.get("fullName") or "").strip(), (data.get("email") or "").strip().lower(), data.get("password") or ""
+    role = (data.get("role") or "").lower()
+    if not full_name or not email or not password or role not in {"student", "faculty"}:
+        return jsonify({"success": False, "message": "Name, email, password and a valid role are required."}), 400
+    users = users_collection()
+    if users.find_one({"email": email}):
+        return jsonify({"success": False, "message": "Email already exists."}), 409
+    allowed = {"fullName", "email", "username", "department", "year", "rollNo", "studentId", "facultyId", "subject"}
+    user = {key: value for key, value in data.items() if key in allowed and value not in (None, "")}
+    user.update({"email": email, "role": role, "password": generate_password_hash(password)})
+    result = users.insert_one(user)
+    user["_id"] = str(result.inserted_id)
+    user.pop("password")
+    return jsonify({"success": True, "message": "User created successfully.", "user": user}), 201
 
 
 # ==========================================================
@@ -149,9 +169,14 @@ def get_user(user_id):
 @admin_required
 def update_user(user_id):
 
-    data = request.get_json()
-
-    data.pop("password", None)
+    data = request.get_json(silent=True) or {}
+    password = data.pop("password", None)
+    allowed = {"fullName", "email", "username", "department", "year", "rollNo", "studentId", "facultyId", "subject", "role"}
+    data = {key: value for key, value in data.items() if key in allowed}
+    if password:
+        data["password"] = generate_password_hash(password)
+    if not data:
+        return jsonify({"success": False, "message": "No changes to save."}), 400
 
     users_collection().update_one(
 

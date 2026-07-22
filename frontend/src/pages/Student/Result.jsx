@@ -1,5 +1,66 @@
-import StudentLayout from '../../layouts/StudentLayout';
-import '../../styles/results.css';
-const qs=['Define Data Structure','Explain Stack with example','What is Recursion?','Explain Tree Data Structure','Applications of Linked List'];
-const scripts=[['Q1.','Define Data Structure.\nA data structure is a way of organizing and storing data so that it can be used efficiently. It allows the data to be accessed and modified effectively.','8 / 10'],['Q2.','Explain Stack with example.\nStack is a linear data structure that follows LIFO principle. It has two operations, push and pop.\nExample: Push(10), Push(20), Push(30)','9 / 10'],['Q3.','What is Recursion? Write an example.\nRecursion is a function calling itself to solve a smaller instance of the same problem.','9 / 10'],['Q4.','Explain Tree Data Structure.\nTree is a non-linear data structure consisting of nodes. It has a root node and child nodes.','8 / 10'],['Q5.','Write the applications of Linked List.\n1. Dynamic memory allocation\n2. Implementation of stack and queue\n3. Graph representation','8 / 10']];
-export default function Result(){return <StudentLayout><main className="results-page"><div className="metrics">{[['▣','Total Marks','50',' / 100'],['◴','Percentage','84%',''],['✪','Grade','A',''],['♕','Rank in Class','5',' / 68'],['▣','Exam','Internal Assessment - 1','12 May 2024']].map(x=><article className="metric" key={x[1]}><i>{x[0]}</i><div><small>{x[1]}</small><b>{x[2]}<span>{x[3]}</span></b></div></article>)}</div><section className="main-grid"><article className="panel"><h2>Evaluated Answer Sheet</h2><div className="tools"><button>☝</button><button>⌕</button><button>⌖</button></div><div className="paper">{scripts.map(s=><div className="answer" key={s[0]}><b>{s[0]}</b><span>(10 Marks)</span><p>{s[1]}</p><em>{s[2]}</em></div>)}</div><p className="legend">🟩 Excellent　 🟦 Good　 🟧 Average　 🟥 Needs Improvement</p></article><div><article className="panel feedback"><div className="tabs">{qs.map((q,i)=><div className="tab" key={q}><b>Q{i+1}</b><span>{i===1||i===2?'9':'8'} / 10</span><p>{q}</p></div>)}</div><div className="review"><div><h3>Q1.　Define Data Structure.<span>8 / 10</span></h3></div><div><b className="tag">Model Answer</b><p>A data structure is a way of organizing and storing data in a computer so that it can be accessed and modified efficiently.</p></div><div><b className="tag">Student Answer</b><p>A data structure is a way of organizing and storing data so that it can be used efficiently.</p></div><div><b className="tag">Feedback</b><div className="greenbox">✔ Good definition and understanding of the concept.<br/>✔ Covered main points well.<br/>✕ Could include more about memory optimization.<br/>✕ Example would make it better.</div></div></div></article><article className="panel performance"><h2>Overall Performance</h2><div className="performance-grid">{[['Correct Answers','20 / 25'],['Partial Answers','5 / 25'],['Incorrect Answers','0 / 25'],['Average Score','8.4 / 10']].map(x=><div className="perf" key={x[0]}><small>{x[0]}</small><b>{x[1]}</b></div>)}</div></article></div></section><section className="bottom-grid"><article className="panel transcript"><header><h2>Transcript (OCR Extracted Text)</h2><button className="download-btn">⇩ Download TXT</button></header><div className="ocr">Q1. Define Data Structure.\nA data structure is a way of organizing and storing data so that it can be used efficiently.\n\nQ2. Explain Stack with example. Stack is a linear data structure that follows LIFO principle.</div></article><article className="panel download"><div><h2>Download Reports</h2><p>You can download your evaluated report and answer sheet.</p><div className="links"><a>▧　 Download Evaluated Report (PDF)</a><a>▣　 Download Transcript (TXT)</a></div></div><div className="art">⇩</div></article></section></main></StudentLayout>}
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import { ClipboardX, FileText, RefreshCw } from "lucide-react";
+import api from "../../services/api";
+import "../../styles/results.css";
+import "../../styles/result-state.css";
+
+export default function Result() {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadResults = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get("/student/results");
+      // Only show completed evaluations. OCR uploads that have not yet been
+      // evaluated must never appear as fabricated marks or feedback.
+      setResults((data.results || []).filter((item) => item.status === "evaluated"));
+    } catch {
+      setResults([]);
+      toast.error("Unable to load results");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadResults(); }, []);
+
+  return (
+    <main className="results-page">
+        <header className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Results Overview</h1>
+            <p className="text-gray-500">Your OCR-processed and evaluated answer sheets.</p>
+          </div>
+          <button onClick={loadResults} className="download-btn flex items-center gap-2">
+            <RefreshCw size={16} /> Refresh
+          </button>
+        </header>
+
+        {loading ? (
+          <section className="result-status-card text-gray-500">Loading results...</section>
+        ) : results.length === 0 ? (
+          <section className="result-status-card">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-violet-50 text-violet-600">
+              <ClipboardX size={32} />
+            </div>
+            <h2 className="text-xl font-bold">No evaluated answer sheets yet</h2>
+            <p className="mx-auto mt-2 max-w-md text-gray-500">
+              Your results will appear here after staff upload your answer-sheet PDF and OCR processing and evaluation are completed.
+            </p>
+          </section>
+        ) : (
+          <section className="grid gap-4">
+            {results.map((result) => (
+              <Link key={result._id} to={`/student/result/${result._id}`} className="result-row hover:shadow-md">
+                <div className="flex items-center gap-4"><FileText className="text-violet-600" /><div><h2 className="font-bold">{result.examName || result.subject || "Evaluated answer sheet"}</h2><p className="text-sm text-gray-500">{result.subject || "Answer-script evaluation"}</p></div></div>
+                <b>{result.marks ?? 0} marks</b>
+              </Link>
+            ))}
+          </section>
+        )}
+    </main>
+  );
+}

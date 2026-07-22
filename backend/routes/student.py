@@ -39,43 +39,19 @@ def profile_payload(user):
 @student_bp.route("/dashboard", methods=["GET"])
 @student_required
 def dashboard():
-
     email = get_jwt_identity()
-
-    user = users_collection().find_one({
-        "email": email
-    })
-
+    user = users_collection().find_one({"email": email})
     if not user:
-
-        return jsonify({
-            "success": False,
-            "message": "Student not found"
-        }), 404
-
-    evaluations = list(
-        evaluations_collection().find({
-            "studentEmail": email
-        })
-    )
-
+        return jsonify({"success": False, "message": "Student not found"}), 404
+    evaluations = list(evaluations_collection().find({"studentEmail": email}))
     total = len(evaluations)
-
     average = 0
-
     if total > 0:
-
-        average = round(
-
-            sum(x.get("marks", 0) for x in evaluations) / total,
-
-            2
-
-        )
-
+        average = round(sum(x.get("marks", 0) for x in evaluations) / total, 2)
     return jsonify({
         "name": user.get("fullName"),
         "email": user.get("email"),
+        "photo": user.get("photo", ""),
         "registerNo": user.get("rollNo") or user.get("studentId", "—"),
         "department": user.get("department", "—"),
         "averageMarks": average,
@@ -91,6 +67,45 @@ def dashboard():
             for item in evaluations
         ],
     })
+
+
+# =====================================================
+# STUDENT EXAMS, TRANSCRIPT AND REPORT LIST
+# =====================================================
+
+def evaluation_payload(item):
+    """Return only the evaluation fields a student is allowed to see."""
+    marks = item.get("marks", item.get("totalMarks", 0))
+    return {"id": str(item.get("_id", "")), "examName": item.get("examName") or item.get("subject") or "Untitled exam", "subject": item.get("subject") or "—", "date": item.get("evaluatedAt") or item.get("createdAt") or "—", "marks": marks, "totalMarks": item.get("totalMarks", 100), "status": item.get("status", "pending"), "grade": item.get("grade", "—"), "hasReport": bool(item.get("pdfReport"))}
+
+
+@student_bp.route("/exams", methods=["GET"])
+@student_required
+def exams():
+    email = get_jwt_identity()
+    records = [evaluation_payload(item) for item in evaluations_collection().find({"studentEmail": email})]
+    return jsonify({"success": True, "count": len(records), "exams": records})
+
+
+@student_bp.route("/transcript", methods=["GET"])
+@student_required
+def transcript():
+    email = get_jwt_identity()
+    user = users_collection().find_one({"email": email})
+    if not user:
+        return jsonify({"success": False, "message": "Student not found"}), 404
+    completed = [item for item in evaluations_collection().find({"studentEmail": email}) if item.get("status") == "evaluated"]
+    subjects = [evaluation_payload(item) for item in completed]
+    average = round(sum(item["marks"] for item in subjects) / len(subjects), 2) if subjects else 0
+    return jsonify({"success": True, "transcript": {"name": user.get("fullName", "Student"), "registerNo": user.get("rollNo") or user.get("studentId", "—"), "department": user.get("department", "Not assigned"), "averageMarks": average, "subjects": subjects}})
+
+
+@student_bp.route("/reports", methods=["GET"])
+@student_required
+def reports():
+    email = get_jwt_identity()
+    records = [evaluation_payload(item) for item in evaluations_collection().find({"studentEmail": email}) if item.get("pdfReport")]
+    return jsonify({"success": True, "count": len(records), "reports": records})
 
 
 # =====================================================
@@ -142,10 +157,13 @@ def update_profile():
 
     full_name = (data.get("name") or "").strip()
     mobile = (data.get("mobile") or "").strip()
+    department = (data.get("department") or "").strip()
     if not full_name:
         return jsonify({"success": False, "message": "Name is required."}), 400
+    if not department:
+        return jsonify({"success": False, "message": "Please select a department."}), 400
 
-    updates = {"fullName": full_name, "mobile": mobile}
+    updates = {"fullName": full_name, "mobile": mobile, "department": department}
     new_password = data.get("newPassword") or ""
     if new_password:
         current_password = data.get("currentPassword") or ""

@@ -1,195 +1,34 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api";
 import toast from "react-hot-toast";
-import {
-  UploadCloud,
-  Trash2,
-  FileText,
-  PlayCircle,
-} from "lucide-react";
+import { FileText, PlayCircle, Trash2, UploadCloud } from "lucide-react";
+import api from "../../services/api";
+import "./upload-answer-sheets.css";
 
 export default function UploadAnswerSheets() {
-
   const navigate = useNavigate();
-
   const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const chooseFiles = (event) => setFiles(Array.from(event.target.files || []));
+  const removeFile = (index) => setFiles((current) => current.filter((_, fileIndex) => fileIndex !== index));
 
-  const handleFiles = (e) => {
-    setFiles(Array.from(e.target.files));
-  };
-
-  const removeFile = (index) => {
-    const updated = [...files];
-    updated.splice(index, 1);
-    setFiles(updated);
-  };
-
-  const uploadFiles = async () => {
-
-    if (files.length === 0) {
-      toast.error("Please select answer sheets");
-      return;
-    }
-
+  async function uploadFiles() {
+    if (!files.length) { toast.error("Choose at least one answer sheet."); return; }
     try {
-
-      setLoading(true);
-
-      await Promise.all(files.map((file) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        return api.post("/evaluation/upload-answer-sheet", formData, { headers: { "Content-Type": "multipart/form-data" } });
-      }));
-
-      toast.success("Answer Sheets Uploaded Successfully");
-
+      setUploading(true);
+      await Promise.all(files.map((file) => { const form = new FormData(); form.append("file", file); return api.post("/evaluation/upload-answer-sheet", form, { headers: { "Content-Type": "multipart/form-data" } }); }));
+      toast.success("Answer sheets uploaded. OCR processing can now begin.");
       navigate("/faculty/evaluation");
+    } catch (error) { toast.error(error.response?.data?.message || "Unable to upload answer sheets."); }
+    finally { setUploading(false); }
+  }
 
-    } catch (err) {
-
-      console.log(err);
-
-      toast.error("Upload Failed");
-
-    } finally {
-
-      setLoading(false);
-
-    }
-  };
-
-  return (
-
-    <div className="min-h-screen bg-gray-100 py-10">
-
-      <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-lg p-10">
-
-        <h1 className="text-4xl font-bold">
-
-          Upload Student Answer Sheets
-
-        </h1>
-
-        <p className="text-gray-500 mt-2">
-
-          Upload all scanned answer sheets for AI evaluation.
-
-        </p>
-
-        <div className="mt-10 border-2 border-dashed border-indigo-400 rounded-3xl p-12 text-center">
-
-          <UploadCloud
-            size={70}
-            className="mx-auto text-indigo-600"
-          />
-
-          <h2 className="text-2xl font-semibold mt-5">
-
-            Select Multiple Files
-
-          </h2>
-
-          <p className="text-gray-500 mt-2">
-
-            PDF, JPG, JPEG, PNG
-
-          </p>
-
-          <input
-            multiple
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={handleFiles}
-            className="mt-8"
-          />
-
-        </div>
-
-        {files.length > 0 && (
-
-          <div className="mt-10">
-
-            <h2 className="text-2xl font-bold mb-5">
-
-              Selected Files
-
-            </h2>
-
-            <div className="space-y-4">
-
-              {files.map((file, index) => (
-
-                <div
-                  key={index}
-                  className="bg-gray-50 rounded-xl p-5 flex justify-between items-center"
-                >
-
-                  <div className="flex items-center gap-4">
-
-                    <FileText
-                      className="text-indigo-600"
-                      size={30}
-                    />
-
-                    <div>
-
-                      <h3 className="font-semibold">
-
-                        {file.name}
-
-                      </h3>
-
-                      <p className="text-sm text-gray-500">
-
-                        {(file.size / 1024).toFixed(2)} KB
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  <button
-                    onClick={() => removeFile(index)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-
-                    <Trash2 />
-
-                  </button>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-        )}
-
-        <div className="flex justify-end mt-10">
-
-          <button
-            onClick={uploadFiles}
-            disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl flex items-center gap-3"
-          >
-
-            <PlayCircle size={20} />
-
-            {loading ? "Uploading..." : "Start AI Evaluation"}
-
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  );
-
+  return <main className="answer-upload-page">
+    <header><h1>Upload Student Answer Sheets</h1><p>Upload scanned answer sheets for OCR extraction and AI evaluation.</p></header>
+    <section className="answer-upload-card">
+      <label className="answer-dropzone"><UploadCloud /><strong>Select answer-sheet files</strong><span>PDF, JPG, JPEG, or PNG · You may select multiple files</span><span className="answer-file-button">Choose files<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" onChange={chooseFiles} /></span></label>
+      {files.length > 0 && <div className="answer-file-list"><h2>Selected files ({files.length})</h2>{files.map((file, index) => <div key={`${file.name}-${index}`}><FileText /><span><strong>{file.name}</strong><small>{(file.size / 1024).toFixed(1)} KB</small></span><button onClick={() => removeFile(index)} aria-label={`Remove ${file.name}`}><Trash2 size={18} /></button></div>)}</div>}
+      <footer><p>Files are uploaded securely and processed through OCR before evaluation.</p><button onClick={uploadFiles} disabled={uploading || !files.length}><PlayCircle size={18} /> {uploading ? "Uploading…" : "Upload and Start Evaluation"}</button></footer>
+    </section>
+  </main>;
 }
