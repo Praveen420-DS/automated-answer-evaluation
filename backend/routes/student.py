@@ -58,7 +58,7 @@ def dashboard():
         "completedExams": total,
         "exams": [
             {
-                "examId": str(item.get("_id", "")),
+                "evaluationId": str(item.get("_id", "")),
                 "subject": item.get("subject") or item.get("examName", "—"),
                 "marks": item.get("marks", 0),
                 "aiScore": item.get("aiScore", item.get("similarity", 0)),

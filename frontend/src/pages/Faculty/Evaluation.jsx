@@ -35,9 +35,9 @@ export default function Evaluation() {
         navigate("/faculty/upload-answer-sheets", { state: { examId } });
         return;
       }
-      const response = await api.post("/evaluation/start", { examId, answerSheetId: answerSheetIds[0] });
+      const responses = await Promise.all(answerSheetIds.map((answerSheetId) => api.post("/evaluation/start", { examId, answerSheetId })));
 
-      if (response.data.success) {
+      if (responses.every((response) => response.data.success)) {
 
         setStatus("Extracting Answers...");
         setProgress(40);

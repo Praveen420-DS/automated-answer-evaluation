@@ -30,6 +30,16 @@ os.makedirs(QUESTION_FOLDER, exist_ok=True)
 os.makedirs(ANSWER_KEY_FOLDER, exist_ok=True)
 
 
+def _owned_exam(exam_id):
+    """Return an exam only when it belongs to the authenticated faculty user."""
+    try:
+        return exams_collection().find_one({
+            "_id": ObjectId(exam_id), "facultyId": get_jwt_identity(),
+        })
+    except Exception:
+        return None
+
+
 def _extract_document_text(filepath: Path) -> str:
     """Use the existing format parsers for faculty-uploaded text documents."""
     extension = filepath.suffix.lower()
@@ -91,7 +101,7 @@ def get_all_exams():
 
     exams = []
 
-    for exam in exams_collection().find():
+    for exam in exams_collection().find({"facultyId": get_jwt_identity()}):
 
         exam["_id"] = str(exam["_id"])
 
@@ -116,11 +126,7 @@ def get_all_exams():
 @faculty_required
 def get_exam(exam_id):
 
-    exam = exams_collection().find_one({
-
-        "_id": ObjectId(exam_id)
-
-    })
+    exam = _owned_exam(exam_id)
 
     if exam is None:
 
@@ -153,13 +159,10 @@ def update_exam(exam_id):
 
     data = request.get_json()
 
+    if not _owned_exam(exam_id):
+        return jsonify({"success": False, "message": "Exam Not Found"}), 404
     exams_collection().update_one(
-
-        {
-
-            "_id": ObjectId(exam_id)
-
-        },
+        {"_id": ObjectId(exam_id), "facultyId": get_jwt_identity()},
 
         {
 
@@ -186,11 +189,9 @@ def update_exam(exam_id):
 @faculty_required
 def delete_exam(exam_id):
 
-    exams_collection().delete_one({
-
-        "_id": ObjectId(exam_id)
-
-    })
+    if not _owned_exam(exam_id):
+        return jsonify({"success": False, "message": "Exam Not Found"}), 404
+    exams_collection().delete_one({"_id": ObjectId(exam_id), "facultyId": get_jwt_identity()})
 
     return jsonify({
 
@@ -209,26 +210,18 @@ def delete_exam(exam_id):
 @faculty_required
 def upload_question_paper():
 
-    if "file" not in request.files:
-
-        return jsonify({
-
-            "success": False,
-
-            "message": "No File Uploaded"
-
-        }), 400
-
-    file = request.files["file"]
+    file = request.files.get("file")
+    if not file or not file.filename:
+        return jsonify({"success": False, "message": "No File Uploaded"}), 400
     exam_id = request.form.get("examId")
     if not exam_id:
         return jsonify({"success": False, "message": "examId is required"}), 400
+    if not _owned_exam(exam_id):
+        return jsonify({"success": False, "message": "Exam Not Found"}), 404
     try:
-        exam_object_id = ObjectId(exam_id)
+        ObjectId(exam_id)
     except Exception:
         return jsonify({"success": False, "message": "Invalid examId"}), 400
-    if not exams_collection().find_one({"_id": exam_object_id}):
-        return jsonify({"success": False, "message": "Exam Not Found"}), 404
 
     filename = secure_filename(file.filename)
     if not filename:
@@ -290,46 +283,24 @@ def upload_question_paper():
 @faculty_bp.route("/upload-answer-key", methods=["POST"])
 @faculty_required
 def upload_answer_key():
-
-    if "file" not in request.files:
-
-        return jsonify({
-
-            "success": False,
-
-            "message": "No File Uploaded"
-
-        }), 400
-
-    file = request.files["file"]
+    file = request.files.get("file")
     exam_id = request.form.get("examId")
     if not exam_id:
         return jsonify({"success": False, "message": "examId is required"}), 400
+    if not _owned_exam(exam_id):
+        return jsonify({"success": False, "message": "Exam Not Found"}), 404
     try:
-        exam_object_id = ObjectId(exam_id)
+        ObjectId(exam_id)
     except Exception:
         return jsonify({"success": False, "message": "Invalid examId"}), 400
-    if not exams_collection().find_one({"_id": exam_object_id}):
-        return jsonify({"success": False, "message": "Exam Not Found"}), 404
 
-    filename = secure_filename(file.filename)
-    if not filename:
-        return jsonify({"success": False, "message": "Invalid filename"}), 400
-    filepath = ANSWER_KEY_FOLDER / filename
-
-    file.save(filepath)
-
-    answer_key = {
-
-        "filename": filename,
-
-        "path": str(filepath),
-        "examId": exam_id,
-
-        "uploadedAt": datetime.utcnow()
-
-    }
-    answer_keys_collection().insert_one(answer_key)
+    if file and file.filename:
+        filename = secure_filename(file.filename)
+        if not filename:
+            return jsonify({"success": False, "message": "Invalid filename"}), 400
+        filepath = ANSWER_KEY_FOLDER / filename
+        file.save(filepath)
+        answer_keys_collection().insert_one({"filename": filename, "path": str(filepath), "examId": exam_id, "uploadedAt": datetime.utcnow()})
 
     # A frontend may submit parsed reference answers alongside the source file.
     # Keeping this optional preserves existing file-only uploads.
@@ -338,16 +309,23 @@ def upload_answer_key():
         references = json.loads(request.form.get("referenceAnswers", "[]"))
     except ValueError:
         return jsonify({"success": False, "message": "referenceAnswers must be JSON"}), 400
+    if not references:
+        return jsonify({"success": False, "message": "Provide a source file or at least one reference answer."}), 400
     created_references = 0
     for reference in references:
         number = reference.get("questionNumber")
+        answer = (reference.get("referenceAnswer") or "").strip()
+        if number is None or not answer:
+            return jsonify({"success": False, "message": "Each reference answer needs a questionNumber and referenceAnswer."}), 400
         question = questions_collection().find_one({"examId": exam_id, "questionNumber": number})
-        answer_keys_collection().insert_one({
+        if not question:
+            return jsonify({"success": False, "message": f"Question {number} was not found for this exam."}), 400
+        answer_keys_collection().update_one({"examId": exam_id, "questionNumber": number, "referenceAnswer": {"$exists": True}}, {"$set": {
             "examId": exam_id, "questionId": str(question["_id"]) if question else None,
-            "questionNumber": number, "referenceAnswer": reference.get("referenceAnswer", ""),
+            "questionNumber": number, "referenceAnswer": answer,
             "rubric": reference.get("rubric"), "keywords": reference.get("keywords", []),
-            "concepts": reference.get("concepts", []), "createdAt": datetime.utcnow(),
-        })
+            "concepts": reference.get("concepts", []), "updatedAt": datetime.utcnow(),
+        }}, upsert=True)
         created_references += 1
 
     return jsonify({
@@ -370,7 +348,11 @@ def get_questions():
 
     data = []
 
-    for q in questions_collection().find():
+    exam_id = request.args.get("examId")
+    if exam_id and not _owned_exam(exam_id):
+        return jsonify({"success": False, "message": "Exam Not Found"}), 404
+    query = {"examId": exam_id} if exam_id else {"examId": {"$in": [str(item["_id"]) for item in exams_collection().find({"facultyId": get_jwt_identity()}, {"_id": 1})]}}
+    for q in questions_collection().find(query):
 
         q["_id"] = str(q["_id"])
 
@@ -395,11 +377,13 @@ def get_questions():
 @faculty_required
 def delete_question(question_id):
 
-    questions_collection().delete_one({
-
-        "_id": ObjectId(question_id)
-
-    })
+    try:
+        question = questions_collection().find_one({"_id": ObjectId(question_id)})
+    except Exception:
+        question = None
+    if not question or not _owned_exam(question.get("examId")):
+        return jsonify({"success": False, "message": "Question Not Found"}), 404
+    questions_collection().delete_one({"_id": question["_id"]})
 
     return jsonify({
 
@@ -423,9 +407,9 @@ def dashboard():
         "success": True,
 
         "statistics": {
-            "totalExams": exams_collection().count_documents({}),
-            "answerSheets": answer_scripts_collection().count_documents({}),
-            "evaluated": evaluations_collection().count_documents({"status": "evaluated"}),
+            "totalExams": exams_collection().count_documents({"facultyId": get_jwt_identity()}),
+            "answerSheets": answer_scripts_collection().count_documents({"facultyId": get_jwt_identity()}),
+            "evaluated": evaluations_collection().count_documents({"facultyId": get_jwt_identity(), "status": "evaluated"}),
             "students": users_collection().count_documents({"role": "student"})
 
         }

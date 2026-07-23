@@ -51,14 +51,6 @@ def _result_data(raw_page: Any) -> dict[str, Any]:
 @lru_cache(maxsize=1)
 def get_paddle_ocr_engine():
     configure_runtime_environment()
-    # PaddleX imports ModelScope, which imports Torch.  On Windows, importing
-    # Paddle first can leave DLL search paths in a state that makes Torch's
-    # ``shm.dll`` fail with WinError 127.  Loading the verified Torch runtime
-    # first is request-local (this function is lazy) and avoids that conflict.
-    try:
-        import torch  # noqa: F401
-    except ImportError:
-        pass
     from paddleocr import PaddleOCR
 
     return PaddleOCR(

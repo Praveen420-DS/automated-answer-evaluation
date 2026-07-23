@@ -1,1 +1,1 @@
-import { request } from './api'; export const login = data => request('/auth/login',{method:'POST',body:JSON.stringify(data)}); export const register = data => request('/auth/register',{method:'POST',body:JSON.stringify(data)});
+import api from './api'; export const login = data => api.post('/auth/login', data); export const register = data => api.post('/auth/register', data);

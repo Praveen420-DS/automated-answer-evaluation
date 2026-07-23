@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
@@ -12,6 +12,10 @@ export default function UploadAnswerKey() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const examId = state?.examId;
+  const [questions, setQuestions] = useState(state?.questions || []);
+  const [referenceAnswers, setReferenceAnswers] = useState(() =>
+    (state?.questions || []).map((question) => ({ questionNumber: question.questionNumber, referenceAnswer: "" }))
+  );
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -22,14 +26,27 @@ export default function UploadAnswerKey() {
     }
   };
 
+  useEffect(() => {
+    if (questions.length || !examId) return;
+    api.get(`/faculty/questions?examId=${examId}`).then(({ data }) => {
+      const parsed = data.questions || [];
+      setQuestions(parsed);
+      setReferenceAnswers(parsed.map((question) => ({ questionNumber: question.questionNumber, referenceAnswer: "" })));
+    }).catch(() => toast.error("Unable to load parsed questions."));
+  }, [examId, questions.length]);
+
+  const updateReference = (questionNumber, referenceAnswer) => {
+    setReferenceAnswers((current) => current.map((item) => item.questionNumber === questionNumber ? { ...item, referenceAnswer } : item));
+  };
+
   const uploadAnswerKey = async () => {
-    if (!file) {
-      toast.error("Please choose an answer key.");
-      return;
-    }
     if (!examId) {
       toast.error("Create or select an exam before uploading its answer key.");
       navigate("/faculty/create-exam");
+      return;
+    }
+    if (!referenceAnswers.length || referenceAnswers.some((item) => !item.referenceAnswer.trim())) {
+      toast.error("Add a reference answer for every parsed question.");
       return;
     }
 
@@ -39,6 +56,7 @@ export default function UploadAnswerKey() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("examId", examId);
+      formData.append("referenceAnswers", JSON.stringify(referenceAnswers));
 
       await api.post(
         "/faculty/upload-answer-key",
@@ -97,6 +115,8 @@ export default function UploadAnswerKey() {
             className="mt-8"
           />
 
+          <p className="mt-4 text-sm text-gray-500">A source answer-key file is optional when entering reference answers below.</p>
+
         </div>
 
         {file && (
@@ -131,6 +151,17 @@ export default function UploadAnswerKey() {
           </div>
 
         )}
+
+        <section className="mt-8 space-y-5">
+          <h2 className="text-xl font-semibold">Reference Answers</h2>
+          {questions.length ? questions.map((question) => {
+            const current = referenceAnswers.find((item) => item.questionNumber === question.questionNumber);
+            return <label key={question._id || question.questionNumber} className="block rounded-xl border p-4 text-left">
+              <b>Q{question.questionNumber}: {question.questionText || question.question}</b>
+              <textarea className="mt-3 w-full rounded border p-3" rows="4" value={current?.referenceAnswer || ""} onChange={(event) => updateReference(question.questionNumber, event.target.value)} placeholder="Canonical reference answer" />
+            </label>;
+          }) : <p className="text-sm text-red-600">No parsed questions are available for this exam. Upload and parse the question paper first.</p>}
+        </section>
 
         <div className="flex justify-end mt-10">
 

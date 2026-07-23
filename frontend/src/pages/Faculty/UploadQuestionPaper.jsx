@@ -36,7 +36,7 @@ export default function UploadQuestionPaper() {
       formData.append("file", file);
       formData.append("examId", examId);
 
-      await api.post(
+      const { data } = await api.post(
         "/faculty/upload-question-paper",
         formData,
         {
@@ -48,7 +48,7 @@ export default function UploadQuestionPaper() {
 
       toast.success("Question Paper Uploaded Successfully");
 
-      navigate("/faculty/upload-answer-key", { state: { examId } });
+      navigate("/faculty/upload-answer-key", { state: { examId, questions: data.questions || [] } });
     } catch (err) {
       console.error(err);
       toast.error("Upload Failed");

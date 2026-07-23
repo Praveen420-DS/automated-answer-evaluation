@@ -1,11 +1,4 @@
-import axios from "axios";
-
-const API = axios.create({
-    baseURL: "http://127.0.0.1:5000/api",
-    headers: {
-        "Content-Type": "application/json"
-    }
-});
+import API from "./api";
 
 export const getLatestEvaluation = async () => {
     const response = await API.get("/results/latest");
@@ -19,7 +12,7 @@ export const getEvaluationById = async (id) => {
 
 export const downloadReport = async (id) => {
     const response = await API.get(
-        `/results/${id}/report`,
+        `/student/download/${id}`,
         {
             responseType: "blob"
         }

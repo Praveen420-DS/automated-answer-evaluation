@@ -30,6 +30,13 @@ UPLOAD_FOLDER = Path(__file__).resolve().parents[1] / "uploads" / "answer_script
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
+def _owned_exam(exam_id):
+    try:
+        return exams_collection().find_one({"_id": ObjectId(exam_id), "facultyId": get_jwt_identity()})
+    except Exception:
+        return None
+
+
 @evaluation_bp.route("/start", methods=["POST"])
 @faculty_required
 def start_evaluation():
@@ -40,7 +47,7 @@ def start_evaluation():
     if not exam_id or not answer_sheet_id:
         return jsonify({"success": False, "message": "examId and answerSheetId are required."}), 400
     try:
-        exam = exams_collection().find_one({"_id": ObjectId(exam_id)})
+        exam = _owned_exam(exam_id)
         answer_sheet = answer_scripts_collection().find_one({"_id": ObjectId(answer_sheet_id), "examId": exam_id})
     except Exception:
         return jsonify({"success": False, "message": "Invalid examId or answerSheetId."}), 400
@@ -83,6 +90,7 @@ def start_evaluation():
     now = datetime.utcnow()
     evaluation = {
         "examId": exam_id, "examName": exam.get("examName", exam.get("title", "")), "subject": exam.get("subject", ""),
+        "facultyId": get_jwt_identity(),
         "studentId": answer_sheet.get("studentId") or str(student.get("_id", "")), "studentEmail": answer_sheet.get("studentEmail"),
         "studentName": student.get("fullName", ""), "answerSheetId": str(answer_sheet["_id"]),
         "questionResults": question_results, "totalScore": outcome["summary"]["total_marks"],
@@ -126,7 +134,7 @@ def upload_answer_sheet():
     if not exam_id or not student_email:
         return jsonify({"success": False, "message": "examId and studentEmail are required"}), 400
     try:
-        if not exams_collection().find_one({"_id": ObjectId(exam_id)}):
+        if not _owned_exam(exam_id):
             return jsonify({"success": False, "message": "Exam Not Found"}), 404
     except Exception:
         return jsonify({"success": False, "message": "Invalid examId"}), 400
@@ -149,6 +157,7 @@ def upload_answer_sheet():
         "examId": exam_id,
         "studentId": str(student["_id"]),
         "studentEmail": student_email,
+        "facultyId": get_jwt_identity(),
         "ocrStatus": "pending",
         "uploadedAt": datetime.utcnow()
 
@@ -222,7 +231,7 @@ def get_results():
 
     data = []
 
-    for doc in evaluations_collection().find():
+    for doc in evaluations_collection().find({"facultyId": get_jwt_identity()}):
 
         doc["_id"] = str(doc["_id"])
 
