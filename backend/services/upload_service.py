@@ -1,25 +1,24 @@
 import os
+from pathlib import Path
+from uuid import uuid4
+from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = "uploads"
+from services.app_ocr_adapter import extract_and_parse
+
+UPLOAD_FOLDER = Path(__file__).resolve().parents[1] / "uploads" / "answer_scripts"
 
 def process_answer_script(file):
-    # OCR and the sentence-transformer model are optional, heavyweight
-    # dependencies.  Loading them at module import made every API startup try
-    # to download model files, even for unrelated endpoints.
-    from ocr.ocr_service import extract_text
-    from ai.evaluator import evaluate_answers
-
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-    filepath = os.path.join(
-        UPLOAD_FOLDER,
-        file.filename
-    )
+    filename = secure_filename(file.filename or "")
+    if not filename:
+        raise ValueError("Invalid filename")
+    suffix = Path(filename).suffix.lower()
+    if suffix not in {".pdf", ".png", ".jpg", ".jpeg"}:
+        raise ValueError("Only PDF, PNG, JPG, and JPEG files are supported.")
+    filepath = UPLOAD_FOLDER / f"{uuid4().hex}{suffix}"
 
     file.save(filepath)
 
-    student_answers = extract_text(filepath)
-
-    evaluation = evaluate_answers(student_answers)
-
-    return evaluation
+    result = extract_and_parse(filepath)
+    result.update({"success": True, "filename": filename, "path": str(filepath)})
+    return result

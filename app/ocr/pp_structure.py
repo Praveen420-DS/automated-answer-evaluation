@@ -21,6 +21,10 @@ from app.ocr.models import OCRBlock, OCRPage, OCRResult
 @lru_cache(maxsize=1)
 def get_pp_structure_engine():
     configure_runtime_environment()
+    try:
+        import torch  # noqa: F401
+    except ImportError:
+        pass
     from paddleocr import PPStructureV3
 
     return PPStructureV3(

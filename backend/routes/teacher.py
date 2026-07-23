@@ -6,6 +6,7 @@ from pathlib import Path
 from werkzeug.utils import secure_filename
 
 from middleware.auth_middleware import faculty_required
+from flask_jwt_extended import get_jwt_identity
 
 from database.mongodb import (
     exams_collection,
@@ -36,15 +37,17 @@ os.makedirs(ANSWER_KEY_FOLDER, exist_ok=True)
 @faculty_required
 def create_exam():
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     exam = {
 
         "examName": data.get("examName"),
+        "title": data.get("title") or data.get("examName"),
         "subject": data.get("subject"),
         "department": data.get("department"),
         "semester": data.get("semester"),
         "totalMarks": data.get("totalMarks"),
+        "facultyId": get_jwt_identity(),
         "createdAt": datetime.utcnow()
 
     }
@@ -201,6 +204,15 @@ def upload_question_paper():
         }), 400
 
     file = request.files["file"]
+    exam_id = request.form.get("examId")
+    if not exam_id:
+        return jsonify({"success": False, "message": "examId is required"}), 400
+    try:
+        exam_object_id = ObjectId(exam_id)
+    except Exception:
+        return jsonify({"success": False, "message": "Invalid examId"}), 400
+    if not exams_collection().find_one({"_id": exam_object_id}):
+        return jsonify({"success": False, "message": "Exam Not Found"}), 404
 
     filename = secure_filename(file.filename)
     if not filename:
@@ -214,6 +226,7 @@ def upload_question_paper():
         "filename": filename,
 
         "path": str(filepath),
+        "examId": exam_id,
 
         "uploadedAt": datetime.utcnow()
 
@@ -234,7 +247,10 @@ def upload_question_paper():
     inserted = []
 
     for q in questions:
-
+        q["examId"] = exam_id
+        q["questionNumber"] = q.get("number", q.get("questionNumber"))
+        q["questionText"] = q.get("question", q.get("questionText", ""))
+        q["maxMarks"] = q.get("marks", q.get("maxMarks", 0))
         q["createdAt"] = datetime.utcnow()
 
         result = questions_collection().insert_one(q)
@@ -275,6 +291,15 @@ def upload_answer_key():
         }), 400
 
     file = request.files["file"]
+    exam_id = request.form.get("examId")
+    if not exam_id:
+        return jsonify({"success": False, "message": "examId is required"}), 400
+    try:
+        exam_object_id = ObjectId(exam_id)
+    except Exception:
+        return jsonify({"success": False, "message": "Invalid examId"}), 400
+    if not exams_collection().find_one({"_id": exam_object_id}):
+        return jsonify({"success": False, "message": "Exam Not Found"}), 404
 
     filename = secure_filename(file.filename)
     if not filename:
@@ -283,21 +308,43 @@ def upload_answer_key():
 
     file.save(filepath)
 
-    answer_keys_collection().insert_one({
+    answer_key = {
 
         "filename": filename,
 
         "path": str(filepath),
+        "examId": exam_id,
 
         "uploadedAt": datetime.utcnow()
 
-    })
+    }
+    answer_keys_collection().insert_one(answer_key)
+
+    # A frontend may submit parsed reference answers alongside the source file.
+    # Keeping this optional preserves existing file-only uploads.
+    import json
+    try:
+        references = json.loads(request.form.get("referenceAnswers", "[]"))
+    except ValueError:
+        return jsonify({"success": False, "message": "referenceAnswers must be JSON"}), 400
+    created_references = 0
+    for reference in references:
+        number = reference.get("questionNumber")
+        question = questions_collection().find_one({"examId": exam_id, "questionNumber": number})
+        answer_keys_collection().insert_one({
+            "examId": exam_id, "questionId": str(question["_id"]) if question else None,
+            "questionNumber": number, "referenceAnswer": reference.get("referenceAnswer", ""),
+            "rubric": reference.get("rubric"), "keywords": reference.get("keywords", []),
+            "concepts": reference.get("concepts", []), "createdAt": datetime.utcnow(),
+        })
+        created_references += 1
 
     return jsonify({
 
         "success": True,
 
-        "message": "Answer Key Uploaded Successfully"
+        "message": "Answer Key Uploaded Successfully",
+        "referenceAnswersStored": created_references
 
     })
 

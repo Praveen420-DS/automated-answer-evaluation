@@ -32,3 +32,17 @@ def reports_collection(): return mongo.db.reports
 def analytics_collection(): return mongo.db.analytics
 def notifications_collection(): return mongo.db.notifications
 def logs_collection(): return mongo.db.logs
+
+
+def ensure_evaluation_indexes():
+    """Create lookup indexes when evaluation persistence is first used.
+
+    This is intentionally not called during Flask startup, preserving lazy
+    database behaviour when MongoDB is temporarily unavailable.
+    """
+    mongo.db.evaluations.create_index("answerSheetId", unique=True, sparse=True)
+    mongo.db.evaluations.create_index([("studentEmail", 1), ("createdAt", -1)])
+    mongo.db.evaluations.create_index([("examId", 1), ("studentEmail", 1)])
+    mongo.db.answer_scripts.create_index([("examId", 1), ("studentEmail", 1)])
+    mongo.db.questions.create_index([("examId", 1), ("questionNumber", 1)])
+    mongo.db.answer_keys.create_index([("examId", 1), ("questionNumber", 1)])
