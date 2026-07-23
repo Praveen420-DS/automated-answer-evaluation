@@ -54,27 +54,26 @@ export default function UploadAnswerKey() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("file", file);
+      if (file) formData.append("file", file);
       formData.append("examId", examId);
       formData.append("referenceAnswers", JSON.stringify(referenceAnswers));
 
-      await api.post(
-        "/faculty/upload-answer-key",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${api.defaults.baseURL}/faculty/upload-answer-key`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw { response: { data: result } };
 
       toast.success("Answer Key Uploaded Successfully");
 
       navigate("/faculty/upload-answer-sheets", { state: { examId } });
 
     } catch (err) {
-      console.log(err);
-      toast.error("Upload Failed");
+      console.error("Answer key upload failed:", err);
+      toast.error(err.response?.data?.message || "Unable to upload the answer key.");
     } finally {
       setLoading(false);
     }

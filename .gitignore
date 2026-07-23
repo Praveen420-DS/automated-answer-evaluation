@@ -14,6 +14,10 @@ venv/
 *.log
 # Local runtime and downloaded model files
 .runtime_home/
+backend/.runtime/
 
 # Local database
 *.db
+
+# Runtime uploaded files
+backend/uploads/

@@ -1,14 +1,5 @@
-import easyocr
-
-reader = easyocr.Reader(["en"])
-
 def extract_text(image_path):
-
-    result = reader.readtext(
-        image_path,
-        detail=0
-    )
-
-    text = "\n".join(result)
-
-    return text
+    # Reuse the lazy, Python-3.12-compatible EasyOCR loader used by the
+    # question-paper upload flow.
+    from parsers.image_parser import extract_image_text
+    return extract_image_text(image_path)

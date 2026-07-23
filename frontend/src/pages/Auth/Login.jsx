@@ -100,9 +100,11 @@ export default function Login() {
         toast.error(res.data.message);
       }
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Invalid Username or Password"
-      );
+      if (!err.response) {
+        toast.error("Login server is not running. Double-click start-evalai.cmd, then refresh this page.");
+      } else {
+        toast.error(err.response.data?.message || "Invalid Username or Password");
+      }
     } finally {
       setLoading(false);
     }
