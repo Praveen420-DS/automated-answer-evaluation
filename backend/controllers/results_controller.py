@@ -5,8 +5,8 @@ from services.evaluation_service import (
 )
 
 
-def get_latest_result():
-    data = latest_evaluation()
+def get_latest_result(student_email=None):
+    data = latest_evaluation(student_email)
 
     if not data:
         return jsonify({
@@ -17,8 +17,8 @@ def get_latest_result():
     return jsonify(data), 200
 
 
-def get_result_by_id(result_id):
-    data = evaluation_by_id(result_id)
+def get_result_by_id(result_id, student_email=None):
+    data = evaluation_by_id(result_id, student_email)
 
     if not data:
         return jsonify({

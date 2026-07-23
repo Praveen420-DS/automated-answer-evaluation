@@ -1,21 +1,23 @@
-venv/
-.venv/
-env/
+node_modules/
+frontend/dist/
+.env
+.env.*
+!.env.example
 
 __pycache__/
-*.pyc
+*.py[cod]
 
-.env
-
-*.db
-*.sqlite3
-
-.streamlit/secrets.toml
-
-.vscode/
-.idea/
+.pytest_cache/
+.venv/
+venv/
 
 *.log
-
-# PaddleOCR, PaddleX, and Hugging Face runtime caches
+# Local runtime and downloaded model files
 .runtime_home/
+backend/.runtime/
+
+# Local database
+*.db
+
+# Runtime uploaded files
+backend/uploads/

@@ -4,11 +4,43 @@ from middleware.auth_middleware import login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 
-from database.mongodb import users_collection
+from database.mongodb import mongo, users_collection
 from utils.student_excel import append_registered_student
+from utils.workbook_users import find_csv_user, find_workbook_user
 
 # Create Blueprint
 auth_bp = Blueprint("auth", __name__)
+
+
+def legacy_imported_user(identifier):
+    """Read accounts imported by the original Excel script into separate collections."""
+    wanted = identifier.lower()
+    for collection_name, role, id_key in (
+        ("students", "student", "Student ID"),
+        ("staffs", "faculty", "Teacher ID"),
+        ("faculty", "faculty", "Teacher ID"),
+        ("admin", "admin", "Admin ID"),
+        ("admins", "admin", "Admin ID"),
+    ):
+        document = mongo.db[collection_name].find_one({
+            "$or": [{"Email": wanted}, {"email": wanted}, {id_key: {"$regex": f"^{identifier}$", "$options": "i"}}]
+        })
+        if document is None and "@" not in wanted:
+            document = mongo.db[collection_name].find_one({"Email": f"{wanted}@evalai.com"})
+        if not document:
+            continue
+        status = str(document.get("Status", document.get("status", "Active"))).lower()
+        if status != "active":
+            return None
+        email = str(document.get("Email", document.get("email", ""))).strip().lower()
+        account_id = str(document.get(id_key, document.get(id_key.replace(" ", "_"), ""))).strip()
+        return {
+            "fullName": document.get("Name", document.get("name", "")), "email": email,
+            "username": account_id or email.split("@", 1)[0],
+            "password": document.get("Password", document.get("password", "")),
+            "role": role, "status": "Active",
+        }
+    return None
 
 # ===========================
 # Register API
@@ -105,17 +137,39 @@ def login():
 
     users = users_collection()
 
-    user = users.find_one({
-        "$or": [
-            {"email": identifier},
-            {"username": identifier}
-        ]
-    })
+    # The provided CSV files are the demo login source of truth. This checks
+    # Student, Staff (Teachers), and Admin files before MongoDB.
+    user = find_csv_user(identifier, password)
+    if user:
+        users.update_one({"email": user["email"]}, {"$set": user}, upsert=True)
+    else:
+        user = users.find_one({
+            "$or": [
+                {"email": identifier},
+                {"username": identifier}
+            ]
+        })
 
     # Imported users use email addresses as their identifiers. Allow the
     # short form shown in the login screen (for example, "student001").
     if user is None and "@" not in identifier:
         user = users.find_one({"email": f"{identifier}@evalai.com"})
+
+    if user is None:
+        user = legacy_imported_user(identifier)
+
+    # Demo credentials are maintained in the supplied Excel workbook.  On a
+    # fresh database, import the matching account on first successful login so
+    # Staff and Admin can sign in without manually running an import script.
+    if user is None:
+        workbook_user = find_workbook_user(identifier, password)
+        if workbook_user:
+            users.update_one(
+                {"email": workbook_user["email"]},
+                {"$setOnInsert": workbook_user},
+                upsert=True,
+            )
+            user = users.find_one({"email": workbook_user["email"]}) or workbook_user
 
     if user is None:
 
@@ -126,7 +180,13 @@ def login():
 
         }), 404
 
-    if not check_password_hash(user["password"], password):
+    stored_password = str(user.get("password", ""))
+    password_matches = (
+        check_password_hash(stored_password, password)
+        if stored_password.startswith(("pbkdf2:", "scrypt:"))
+        else stored_password == password
+    )
+    if not password_matches:
 
         return jsonify({
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
+import api from "../../services/api";
 import {
   User,
   Award,
@@ -13,29 +13,20 @@ import {
 
 export default function StudentResult() {
 
-  const { examId } = useParams();
+  const { evaluationId } = useParams();
 
   const [result, setResult] = useState(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     loadResult();
-  }, []);
+  }, [evaluationId]);
 
   const loadResult = async () => {
 
     try {
 
-      const token = localStorage.getItem("token");
-
-      const res = await axios.get(
-        `http://127.0.0.1:5000/api/student/result/${examId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await api.get(`/student/result/${evaluationId}`);
 
       setResult(res.data.data);
 
@@ -48,10 +39,10 @@ export default function StudentResult() {
   };
 
   const downloadReport = () => {
-
-    window.open(
-      `http://127.0.0.1:5000/api/student/report/${examId}`
-    );
+    api.get(`/student/download/${evaluationId}`, { responseType: "blob" }).then((response) => {
+      const url = URL.createObjectURL(response.data); const link = document.createElement("a");
+      link.href = url; link.download = "evaluation-report.pdf"; link.click(); URL.revokeObjectURL(url);
+    }).catch(() => toast.error("Report is not available yet."));
 
   };
 
@@ -153,7 +144,7 @@ export default function StudentResult() {
 
               <h3 className="font-bold">
 
-                {result.totalMarks}/100
+                {result.marks}/{result.totalMarks}
 
               </h3>
 
@@ -171,7 +162,7 @@ export default function StudentResult() {
 
               <h3 className="font-bold">
 
-                {result.aiScore}%
+                {result.percentage}%
 
               </h3>
 
@@ -193,10 +184,10 @@ export default function StudentResult() {
 
           <div className="space-y-8 mt-8">
 
-            {(result.questions || []).map((question) => (
+            {(result.questionResults || []).map((question) => (
 
               <div
-                key={question.questionNo}
+                key={question.questionNumber}
                 className="border rounded-2xl p-6"
               >
 
@@ -204,7 +195,7 @@ export default function StudentResult() {
 
                   <h3 className="text-2xl font-bold">
 
-                    Question {question.questionNo}
+                    Question {question.questionNumber}
 
                   </h3>
 
@@ -212,7 +203,7 @@ export default function StudentResult() {
 
                     <CheckCircle size={16} />
 
-                    {question.marks} Marks
+                    {question.score}/{question.maxScore} Marks
 
                   </span>
 
@@ -228,7 +219,7 @@ export default function StudentResult() {
 
                   <div className="bg-gray-100 rounded-xl p-4 mt-2">
 
-                    {question.studentAnswer}
+                    {question.ocrText}
 
                   </div>
 
@@ -244,7 +235,7 @@ export default function StudentResult() {
 
                   <div className="bg-green-50 rounded-xl p-4 mt-2">
 
-                    {question.correctAnswer}
+                    {question.feedback}
 
                   </div>
 
@@ -262,7 +253,7 @@ export default function StudentResult() {
 
                     <p className="text-3xl font-bold text-blue-600">
 
-                      {question.similarity}%
+                      {question.confidence}
 
                     </p>
 

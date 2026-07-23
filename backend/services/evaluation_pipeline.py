@@ -1,4 +1,4 @@
-from ai.evaluator import evaluate_question
+from services.app_evaluation_adapter import evaluate_parsed_answer
 
 def evaluate_exam(
     questions,
@@ -14,34 +14,30 @@ def evaluate_exam(
 
     for q in questions:
 
-        question = q["question"]
+        question = q.get("question", q.get("question_text", ""))
 
-        model = model_answers[q["number"]]
+        number = q.get("number", q.get("question_number"))
+        model = model_answers.get(number, model_answers.get(str(number), ""))
 
         student = student_answers.get(
-            q["number"],
+            number,
             ""
         )
 
-        result = evaluate_question(
+        result = evaluate_parsed_answer(
+            number,
             question,
             model,
             student,
-            q["marks"]
+            q.get("marks", q.get("maximum_score", 0)),
         )
-
-        result["question_number"] = q["number"]
 
         evaluated.append(result)
 
-        total += q["marks"]
+        total += result["maximum_score"]
+        obtained += result["score"]
 
-        obtained += result["obtained_marks"]
-
-    percentage = round(
-        obtained * 100 / total,
-        2
-    )
+    percentage = round(obtained * 100 / total, 2) if total else 0
 
     if percentage >= 90:
         grade = "O"

@@ -10,6 +10,7 @@ import UploadQuestionPaper from '../pages/Faculty/UploadQuestionPaper';
 import UploadAnswerKey from '../pages/Faculty/UploadAnswerKey';
 import UploadAnswerSheets from '../pages/Faculty/UploadAnswerSheets';
 import EvaluationProgress from '../pages/Faculty/EvaluationProgress';
+import Evaluation from '../pages/Faculty/Evaluation';
 import ResultMatrix from '../pages/Faculty/ResultMatrix';
 import Reports from '../pages/Faculty/Reports';
 import Analytics from '../pages/Faculty/Analytics';
@@ -46,7 +47,7 @@ export default function AppRoutes() {
     <Route path="/faculty/upload-question-paper" element={<ProtectedRoute role="faculty"><UploadQuestionPaper /></ProtectedRoute>} />
     <Route path="/faculty/upload-answer-key" element={<ProtectedRoute role="faculty"><UploadAnswerKey /></ProtectedRoute>} />
     <Route path="/faculty/upload-answer-sheets" element={<ProtectedRoute role="faculty"><UploadAnswerSheets /></ProtectedRoute>} />
-    <Route path="/faculty/evaluation" element={<ProtectedRoute role="faculty"><EvaluationProgress /></ProtectedRoute>} />
+    <Route path="/faculty/evaluation" element={<ProtectedRoute role="faculty"><Evaluation /></ProtectedRoute>} />
     <Route path="/faculty/result-matrix" element={<ProtectedRoute role="faculty"><ResultMatrix /></ProtectedRoute>} />
     <Route path="/faculty/reports" element={<ProtectedRoute role="faculty"><Reports /></ProtectedRoute>} />
     <Route path="/faculty/analytics" element={<ProtectedRoute role="faculty"><Analytics /></ProtectedRoute>} />

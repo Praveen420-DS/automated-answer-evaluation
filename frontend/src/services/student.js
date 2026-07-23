@@ -1,1 +1,1 @@
-import { request } from './api'; export const getResults = () => request('/student/results');
+import api from './api'; export const getResults = () => api.get('/student/results');
