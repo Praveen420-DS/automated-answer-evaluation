@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
+import api from "../../services/api";
 import {
   Award, Bell, BookOpen, ChevronRight, ClipboardList, Download, FileText,
   GraduationCap, HelpCircle, LayoutDashboard, LineChart, LogOut, Menu,
@@ -27,7 +27,7 @@ export default function StudentDashboard() {
   useEffect(() => { window.scrollTo(0, 0); loadDashboard(); }, []);
   async function loadDashboard() {
     try {
-      const res = await axios.get("http://127.0.0.1:5000/api/student/dashboard", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      const res = await api.get("/student/dashboard");
       setStudent(res.data);
     } catch { toast.error("Unable to load dashboard"); setStudent({ name: localStorage.getItem("username") || "Student", registerNo: "—", department: "—", averageMarks: 0, completedExams: 0, exams: [] }); }
   }
@@ -45,7 +45,7 @@ export default function StudentDashboard() {
       <div className="student-help"><b>Need Help?</b><p>Our support team is here to assist you.</p><button onClick={() => navigate("/student/help")}><HelpCircle /> Contact Support</button></div>
     </aside>
     <main className="student-main">
-      <header className="student-topbar"><button className="student-menu" onClick={() => setMenuOpen(!menuOpen)}><Menu /></button><span>Automated Answer Script Evaluation</span><div className="topbar-actions"><button className="notification" onClick={() => setNotificationsOpen((open) => !open)} aria-label="Notifications"><Bell /><i>3</i></button>{notificationsOpen && <div className="student-popover notifications-popover"><b>Notifications</b><p>Your profile is up to date.</p><p>New exam updates will appear here.</p></div>}<button className="student-avatar" onClick={() => navigate("/student/profile")} aria-label="Open profile">{student.photo ? <img src={`http://127.0.0.1:5000${student.photo}`} alt="Profile" /> : <UserRound />}</button><button className="student-account-button" onClick={() => setAccountOpen((open) => !open)}><span><b>{name}</b><small>Student</small></span><ChevronRight className="down" /></button>{accountOpen && <div className="student-popover account-popover"><button onClick={() => navigate("/student/profile")}>Profile</button><button onClick={logout}>Logout</button></div>}</div></header>
+      <header className="student-topbar"><button className="student-menu" onClick={() => setMenuOpen(!menuOpen)}><Menu /></button><span>Automated Answer Script Evaluation</span><div className="topbar-actions"><button className="notification" onClick={() => setNotificationsOpen((open) => !open)} aria-label="Notifications"><Bell /><i>3</i></button>{notificationsOpen && <div className="student-popover notifications-popover"><b>Notifications</b><p>Your profile is up to date.</p><p>New exam updates will appear here.</p></div>}<button className="student-avatar" onClick={() => navigate("/student/profile")} aria-label="Open profile">{student.photo ? <img src={`${import.meta.env.VITE_API_ORIGIN || "http://127.0.0.1:5000"}${student.photo}`} alt="Profile" /> : <UserRound />}</button><button className="student-account-button" onClick={() => setAccountOpen((open) => !open)}><span><b>{name}</b><small>Student</small></span><ChevronRight className="down" /></button>{accountOpen && <div className="student-popover account-popover"><button onClick={() => navigate("/student/profile")}>Profile</button><button onClick={logout}>Logout</button></div>}</div></header>
       <section className="student-content">
         <div className="dashboard-heading"><div><p>Welcome back, {name}! 👋</p><h1>Student Dashboard <span>👋</span></h1></div><button onClick={logout}><LogOut /> Logout</button></div>
         <section className="student-stats">{stats.map(([Icon, label, value, tone]) => <article key={label} className={`student-stat ${tone}`}><span><Icon /></span><p>{label}</p><strong>{value}</strong></article>)}</section>

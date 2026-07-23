@@ -2,12 +2,15 @@ import sys
 from pathlib import Path
 
 # ``backend/app.py`` has the same module name as the internal ``app`` package.
-# Put the repository root first so adapters always import the package, including
-# when Flask is started with ``python backend/app.py`` or from ``backend/``.
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) in sys.path:
-    sys.path.remove(str(PROJECT_ROOT))
-sys.path.insert(0, str(PROJECT_ROOT))
+# The repository root must come first so the shared library package ``app`` is
+# imported from the project root. The backend folder follows so local backend
+# modules such as ``routes`` and ``services`` remain importable.
+BACKEND_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = BACKEND_ROOT.parent
+for path in (PROJECT_ROOT, BACKEND_ROOT):
+    if str(path) in sys.path:
+        sys.path.remove(str(path))
+    sys.path.insert(0, str(path))
 
 from flask import Flask, jsonify
 from flask_cors import CORS

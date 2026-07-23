@@ -43,3 +43,25 @@ def configure_runtime_environment() -> None:
     os.environ["USERPROFILE"] = str(RUNTIME_HOME)
     os.environ["PADDLE_PDX_CACHE_HOME"] = str(RUNTIME_HOME / ".paddlex")
     os.environ["HF_HOME"] = str(RUNTIME_HOME / ".cache" / "huggingface")
+
+    if os.name == "nt" and hasattr(os, "add_dll_directory"):
+        try:
+            import site
+            import ctypes
+            for site_dir in site.getsitepackages():
+                torch_lib = os.path.join(site_dir, "torch", "lib")
+                if os.path.isdir(torch_lib):
+                    os.add_dll_directory(torch_lib)
+                    for dll_name in ("c10.dll", "torch_cpu.dll"):
+                        dll_path = os.path.join(torch_lib, dll_name)
+                        if os.path.exists(dll_path):
+                            try:
+                                ctypes.CDLL(dll_path)
+                            except Exception:
+                                pass
+        except Exception:
+            pass
+
+
+
+

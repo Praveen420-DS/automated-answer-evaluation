@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
+import api from "../../services/api";
 import {
   User,
   Award,
@@ -13,29 +13,20 @@ import {
 
 export default function StudentResult() {
 
-  const { examId } = useParams();
+  const { evaluationId } = useParams();
 
   const [result, setResult] = useState(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     loadResult();
-  }, []);
+  }, [evaluationId]);
 
   const loadResult = async () => {
 
     try {
 
-      const token = localStorage.getItem("token");
-
-      const res = await axios.get(
-        `http://127.0.0.1:5000/api/student/result/${examId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await api.get(`/student/result/${evaluationId}`);
 
       setResult(res.data.data);
 
@@ -48,8 +39,7 @@ export default function StudentResult() {
   };
 
   const downloadReport = () => {
-    const token = localStorage.getItem("token");
-    axios.get(`http://127.0.0.1:5000/api/student/download/${examId}`, { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }).then((response) => {
+    api.get(`/student/download/${evaluationId}`, { responseType: "blob" }).then((response) => {
       const url = URL.createObjectURL(response.data); const link = document.createElement("a");
       link.href = url; link.download = "evaluation-report.pdf"; link.click(); URL.revokeObjectURL(url);
     }).catch(() => toast.error("Report is not available yet."));

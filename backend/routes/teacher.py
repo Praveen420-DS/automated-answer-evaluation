@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from bson import ObjectId
 from datetime import datetime
+from uuid import uuid4
 import os
 from pathlib import Path
 from werkzeug.utils import secure_filename
@@ -25,6 +26,7 @@ faculty_bp = Blueprint("faculty", __name__)
 UPLOAD_ROOT = Path(__file__).resolve().parents[1] / "uploads"
 QUESTION_FOLDER = UPLOAD_ROOT / "question_papers"
 ANSWER_KEY_FOLDER = UPLOAD_ROOT / "answer_keys"
+ALLOWED_DOCUMENT_EXTENSIONS = {".pdf", ".docx", ".png", ".jpg", ".jpeg"}
 
 os.makedirs(QUESTION_FOLDER, exist_ok=True)
 os.makedirs(ANSWER_KEY_FOLDER, exist_ok=True)
@@ -53,6 +55,10 @@ def _extract_document_text(filepath: Path) -> str:
         from parsers.image_parser import extract_image_text
         return extract_image_text(filepath)
     raise ValueError("Only PDF, DOCX, PNG, JPG, and JPEG files are supported.")
+
+
+def _valid_document_filename(filename: str) -> bool:
+    return Path(filename).suffix.lower() in ALLOWED_DOCUMENT_EXTENSIONS
 
 
 # =====================================================
@@ -226,27 +232,25 @@ def upload_question_paper():
     filename = secure_filename(file.filename)
     if not filename:
         return jsonify({"success": False, "message": "Invalid filename"}), 400
-    filepath = QUESTION_FOLDER / filename
-
-    file.save(filepath)
-
-    question_papers_collection().insert_one({
-
-        "filename": filename,
-
-        "path": str(filepath),
-        "examId": exam_id,
-
-        "uploadedAt": datetime.utcnow()
-
-    })
+    if not _valid_document_filename(filename):
+        return jsonify({"success": False, "message": "Only PDF, DOCX, PNG, JPG, and JPEG files are supported."}), 400
+    filepath = QUESTION_FOLDER / f"{uuid4().hex}{Path(filename).suffix.lower()}"
 
     try:
+        file.save(filepath)
         text = _extract_document_text(filepath)
+        questions = parse_questions(text)
     except Exception as error:
+        filepath.unlink(missing_ok=True)
         return jsonify({"success": False, "message": f"Could not read question paper: {error}"}), 422
+    if not questions:
+        filepath.unlink(missing_ok=True)
+        return jsonify({"success": False, "message": "No questions could be parsed. Use the expected Q1 ... (5 Marks) format."}), 422
 
-    questions = parse_questions(text)
+    question_papers_collection().insert_one({
+        "filename": filename, "path": str(filepath), "examId": exam_id,
+        "uploadedAt": datetime.utcnow(),
+    })
 
     inserted = []
 
@@ -298,7 +302,9 @@ def upload_answer_key():
         filename = secure_filename(file.filename)
         if not filename:
             return jsonify({"success": False, "message": "Invalid filename"}), 400
-        filepath = ANSWER_KEY_FOLDER / filename
+        if not _valid_document_filename(filename):
+            return jsonify({"success": False, "message": "Only PDF, DOCX, PNG, JPG, and JPEG files are supported."}), 400
+        filepath = ANSWER_KEY_FOLDER / f"{uuid4().hex}{Path(filename).suffix.lower()}"
         file.save(filepath)
         answer_keys_collection().insert_one({"filename": filename, "path": str(filepath), "examId": exam_id, "uploadedAt": datetime.utcnow()})
 

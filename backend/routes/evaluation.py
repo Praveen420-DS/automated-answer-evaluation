@@ -26,6 +26,7 @@ from services.report_service import generate_evaluation_report
 evaluation_bp = Blueprint("evaluation", __name__)
 
 UPLOAD_FOLDER = Path(__file__).resolve().parents[1] / "uploads" / "answer_scripts"
+ALLOWED_ANSWER_SHEET_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -145,6 +146,8 @@ def upload_answer_sheet():
     filename = secure_filename(file.filename)
     if not filename:
         return jsonify({"success": False, "message": "Invalid filename"}), 400
+    if Path(filename).suffix.lower() not in ALLOWED_ANSWER_SHEET_EXTENSIONS:
+        return jsonify({"success": False, "message": "Only PDF, PNG, JPG, and JPEG files are supported."}), 400
 
     filepath = UPLOAD_FOLDER / f"{uuid4().hex}{Path(filename).suffix.lower()}"
 

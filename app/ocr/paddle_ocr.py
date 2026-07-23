@@ -51,16 +51,40 @@ def _result_data(raw_page: Any) -> dict[str, Any]:
 @lru_cache(maxsize=1)
 def get_paddle_ocr_engine():
     configure_runtime_environment()
+    try:
+        from paddlex.repo_manager import core as paddlex_core
+        if hasattr(paddlex_core, "_GlobalContext") and paddlex_core._GlobalContext.is_initialized():
+            paddlex_core._GlobalContext.REPOS = None
+    except Exception:
+        pass
+
     from paddleocr import PaddleOCR
 
-    return PaddleOCR(
-        device=PADDLE_OCR_DEVICE,
-        text_detection_model_name=PADDLE_TEXT_DETECTION_MODEL,
-        text_recognition_model_name=PADDLE_TEXT_RECOGNITION_MODEL,
-        use_doc_orientation_classify=PADDLE_USE_DOC_ORIENTATION_CLASSIFY,
-        use_doc_unwarping=PADDLE_USE_DOC_UNWARPING,
-        use_textline_orientation=PADDLE_USE_TEXTLINE_ORIENTATION,
-    )
+    try:
+        return PaddleOCR(
+            device=PADDLE_OCR_DEVICE,
+            text_detection_model_name=PADDLE_TEXT_DETECTION_MODEL,
+            text_recognition_model_name=PADDLE_TEXT_RECOGNITION_MODEL,
+            use_doc_orientation_classify=PADDLE_USE_DOC_ORIENTATION_CLASSIFY,
+            use_doc_unwarping=PADDLE_USE_DOC_UNWARPING,
+            use_textline_orientation=PADDLE_USE_TEXTLINE_ORIENTATION,
+        )
+    except RuntimeError as exc:
+        if "PDX has already been initialized" in str(exc):
+            try:
+                from paddlex.repo_manager import core as paddlex_core
+                paddlex_core._GlobalContext.REPOS = None
+                return PaddleOCR(
+                    device=PADDLE_OCR_DEVICE,
+                    text_detection_model_name=PADDLE_TEXT_DETECTION_MODEL,
+                    text_recognition_model_name=PADDLE_TEXT_RECOGNITION_MODEL,
+                    use_doc_orientation_classify=PADDLE_USE_DOC_ORIENTATION_CLASSIFY,
+                    use_doc_unwarping=PADDLE_USE_DOC_UNWARPING,
+                    use_textline_orientation=PADDLE_USE_TEXTLINE_ORIENTATION,
+                )
+            except Exception:
+                raise
+        raise
 
 
 def _page_from_paddle_result(raw_page: Any, page_number: int) -> OCRPage:
