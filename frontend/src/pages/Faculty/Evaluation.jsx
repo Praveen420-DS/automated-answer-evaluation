@@ -1,7 +1,7 @@
 import { useState } from "react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Brain,
   ScanSearch,
@@ -12,6 +12,9 @@ import {
 export default function Evaluation() {
 
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const examId = state?.examId;
+  const answerSheetIds = state?.answerSheetIds || [];
 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("Ready to Start");
@@ -27,7 +30,12 @@ export default function Evaluation() {
 
       setProgress(10);
 
-      const response = await api.post("/evaluation/start");
+      if (!examId || !answerSheetIds.length) {
+        toast.error("Upload an answer sheet for an exam before starting evaluation.");
+        navigate("/faculty/upload-answer-sheets", { state: { examId } });
+        return;
+      }
+      const response = await api.post("/evaluation/start", { examId, answerSheetId: answerSheetIds[0] });
 
       if (response.data.success) {
 

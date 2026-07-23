@@ -48,11 +48,13 @@ export default function CreateExam() {
     try {
       setLoading(true);
 
-      await api.post("/faculty/create-exam", exam);
+      const { data } = await api.post("/faculty/create-exam", exam);
+      const examId = data?.data?._id;
+      if (!examId) throw new Error("The server did not return an exam ID.");
 
       toast.success("Exam Created Successfully");
 
-      navigate("/faculty/upload-question-paper");
+      navigate("/faculty/upload-question-paper", { state: { examId } });
     } catch (err) {
       toast.error("Unable to create exam");
     } finally {

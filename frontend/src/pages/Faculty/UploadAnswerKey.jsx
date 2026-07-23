@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import {
@@ -10,6 +10,8 @@ import {
 
 export default function UploadAnswerKey() {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const examId = state?.examId;
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -25,12 +27,18 @@ export default function UploadAnswerKey() {
       toast.error("Please choose an answer key.");
       return;
     }
+    if (!examId) {
+      toast.error("Create or select an exam before uploading its answer key.");
+      navigate("/faculty/create-exam");
+      return;
+    }
 
     try {
       setLoading(true);
 
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("examId", examId);
 
       await api.post(
         "/faculty/upload-answer-key",
@@ -44,7 +52,7 @@ export default function UploadAnswerKey() {
 
       toast.success("Answer Key Uploaded Successfully");
 
-      navigate("/faculty/upload-answer-sheets");
+      navigate("/faculty/upload-answer-sheets", { state: { examId } });
 
     } catch (err) {
       console.log(err);

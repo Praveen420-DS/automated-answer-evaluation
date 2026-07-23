@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import { UploadCloud, FileText, ArrowRight } from "lucide-react";
 
 export default function UploadQuestionPaper() {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const examId = state?.examId;
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -21,12 +23,18 @@ export default function UploadQuestionPaper() {
       toast.error("Please select a file.");
       return;
     }
+    if (!examId) {
+      toast.error("Create or select an exam before uploading its question paper.");
+      navigate("/faculty/create-exam");
+      return;
+    }
 
     try {
       setLoading(true);
 
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("examId", examId);
 
       await api.post(
         "/faculty/upload-question-paper",
@@ -40,7 +48,7 @@ export default function UploadQuestionPaper() {
 
       toast.success("Question Paper Uploaded Successfully");
 
-      navigate("/faculty/upload-answer-key");
+      navigate("/faculty/upload-answer-key", { state: { examId } });
     } catch (err) {
       console.error(err);
       toast.error("Upload Failed");

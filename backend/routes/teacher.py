@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 from pathlib import Path
 from werkzeug.utils import secure_filename
+from parsers.question_parser import parse_questions
 
 from middleware.auth_middleware import faculty_required
 from flask_jwt_extended import get_jwt_identity
@@ -27,6 +28,21 @@ ANSWER_KEY_FOLDER = UPLOAD_ROOT / "answer_keys"
 
 os.makedirs(QUESTION_FOLDER, exist_ok=True)
 os.makedirs(ANSWER_KEY_FOLDER, exist_ok=True)
+
+
+def _extract_document_text(filepath: Path) -> str:
+    """Use the existing format parsers for faculty-uploaded text documents."""
+    extension = filepath.suffix.lower()
+    if extension == ".pdf":
+        from parsers.pdf_parser import extract_pdf_text
+        return extract_pdf_text(filepath)
+    if extension == ".docx":
+        from parsers.docx_parser import extract_docx_text
+        return extract_docx_text(filepath)
+    if extension in {".png", ".jpg", ".jpeg"}:
+        from parsers.image_parser import extract_image_text
+        return extract_image_text(filepath)
+    raise ValueError("Only PDF, DOCX, PNG, JPG, and JPEG files are supported.")
 
 
 # =====================================================
@@ -232,17 +248,12 @@ def upload_question_paper():
 
     })
 
-    # OCR is imported only for this request so the API can start even when the
-    # optional OCR extras have not yet been installed.
-    from ai.question_parser import question_parser
+    try:
+        text = _extract_document_text(filepath)
+    except Exception as error:
+        return jsonify({"success": False, "message": f"Could not read question paper: {error}"}), 422
 
-    # OCR
-
-    text = question_parser.extract_text(filepath)
-
-    # Parse Questions
-
-    questions = question_parser.parse_questions(text)
+    questions = parse_questions(text)
 
     inserted = []
 

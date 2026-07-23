@@ -88,7 +88,7 @@ def start_evaluation():
         "questionResults": question_results, "totalScore": outcome["summary"]["total_marks"],
         "marks": outcome["summary"]["total_marks"], "totalMarks": outcome["summary"]["maximum_marks"],
         "percentage": outcome["summary"]["percentage"], "overallGrade": outcome["summary"]["grade"],
-        "grade": outcome["summary"]["grade"], "status": "completed", "createdAt": now, "updatedAt": now, "evaluatedAt": now,
+        "grade": outcome["summary"]["grade"], "status": "evaluated", "createdAt": now, "updatedAt": now, "evaluatedAt": now,
     }
     existing = evaluations_collection().find_one({"answerSheetId": evaluation["answerSheetId"]})
     if existing:
