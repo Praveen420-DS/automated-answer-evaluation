@@ -1,7 +1,7 @@
 from app.core.answer_parser import parse_answers
 
 
-ocr_text = """
+OCR_TEXT = """
 1. What is Machine Learning 2
 
 Ans:
@@ -27,13 +27,28 @@ Reinforcement Learning
 """
 
 
-if __name__ == "__main__":
+def test_parse_answers_extracts_all_questions():
+    results = parse_answers(OCR_TEXT)
 
-    result = parse_answers(ocr_text)
+    assert len(results) == 3
+    assert [str(item["question_number"]) for item in results] == [
+        "1",
+        "2",
+        "3",
+    ]
 
-    print("\n===== PARSER RESULT =====\n")
 
-    for answer in result:
-        print("Question:", answer["question_number"])
-        print("Answer:", answer["answer"])
-        print("-" * 50)
+def test_parse_answers_extracts_correct_content():
+    results = parse_answers(OCR_TEXT)
+
+    assert "subset of Artificial Intelligence" in results[0]["answer"]
+    assert "artificial neural networks" in results[1]["answer"]
+    assert "Supervised Learning" in results[2]["answer"]
+    assert "Reinforcement Learning" in results[2]["answer"]
+
+
+def test_parse_answers_removes_answer_label():
+    results = parse_answers(OCR_TEXT)
+
+    for result in results:
+        assert not result["answer"].strip().lower().startswith("ans:")
