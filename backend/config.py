@@ -7,9 +7,54 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).with_name(".env"))
 
 
+DEVELOPMENT_SECRET_KEY = (
+    "development-only-flask-secret-key-do-not-use-in-production"
+)
+DEVELOPMENT_JWT_SECRET_KEY = (
+    "development-only-jwt-secret-key-do-not-use-in-production"
+)
+
+
+def validate_security_config(app_env, secret_key, jwt_secret_key):
+    """Validate and resolve Flask/JWT secrets for the selected environment."""
+    app_env = app_env or "development"
+
+    if app_env.lower() == "production":
+        if not secret_key:
+            raise RuntimeError("SECRET_KEY is required when APP_ENV is production")
+        if not jwt_secret_key:
+            raise RuntimeError("JWT_SECRET_KEY is required when APP_ENV is production")
+        if len(secret_key.encode("utf-8")) < 32:
+            raise RuntimeError(
+                "SECRET_KEY must be at least 32 bytes when APP_ENV is production"
+            )
+        if len(jwt_secret_key.encode("utf-8")) < 32:
+            raise RuntimeError(
+                "JWT_SECRET_KEY must be at least 32 bytes when APP_ENV is production"
+            )
+        if secret_key == jwt_secret_key:
+            raise RuntimeError(
+                "SECRET_KEY and JWT_SECRET_KEY must be different when APP_ENV is production"
+            )
+    else:
+        secret_key = secret_key or DEVELOPMENT_SECRET_KEY
+        jwt_secret_key = jwt_secret_key or DEVELOPMENT_JWT_SECRET_KEY
+
+    return secret_key, jwt_secret_key
+
+
+APP_ENV = os.getenv("APP_ENV", "development")
+SECRET_KEY, JWT_SECRET_KEY = validate_security_config(
+    APP_ENV,
+    os.getenv("SECRET_KEY"),
+    os.getenv("JWT_SECRET_KEY"),
+)
+
+
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "development-secret")
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", SECRET_KEY)
+    APP_ENV = APP_ENV
+    SECRET_KEY = SECRET_KEY
+    JWT_SECRET_KEY = JWT_SECRET_KEY
     # The supplied CSV/Excel data is imported into the local ``evalai``
     # database.  Use that database by default so a fresh local run reads the
     # same records visible in MongoDB Compass.
