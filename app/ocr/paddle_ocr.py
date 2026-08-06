@@ -167,6 +167,9 @@ def extract_text_with_paddle(
             "engine": "PaddleOCR",
             "version": PADDLE_OCR_VERSION,
             "model": "PP-OCRv5",
+            "fallback": False,
+            "fallback_reason": None,
+            "structure_enabled": False,
             "preprocessing": preprocess,
         },
     )

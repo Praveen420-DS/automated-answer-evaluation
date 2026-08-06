@@ -11,6 +11,20 @@ TEMP_UPLOAD_DIR = PROJECT_ROOT / "temp_uploads"
 MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024
 ALLOWED_UPLOAD_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
 
+
+SUPPORTED_OCR_ENGINES = {"auto", "paddle", "tesseract"}
+
+
+def validate_ocr_engine(value: str) -> str:
+    engine = value.strip().lower()
+    if engine not in SUPPORTED_OCR_ENGINES:
+        supported = ", ".join(sorted(SUPPORTED_OCR_ENGINES))
+        raise ValueError(f"Unsupported OCR_ENGINE {value!r}; expected one of: {supported}")
+    return engine
+
+
+OCR_ENGINE = validate_ocr_engine(os.environ.get("OCR_ENGINE", "auto"))
+
 PADDLE_OCR_VERSION = "PP-OCRv5"
 PADDLE_OCR_LANG = "en"
 PADDLE_USE_DOC_ORIENTATION_CLASSIFY = False
@@ -19,7 +33,9 @@ PADDLE_USE_TEXTLINE_ORIENTATION = False
 PADDLE_OCR_DEVICE = os.environ.get("PADDLE_OCR_DEVICE", "cpu")
 PADDLE_TEXT_DETECTION_MODEL = "PP-OCRv5_server_det"
 PADDLE_TEXT_RECOGNITION_MODEL = "PP-OCRv5_server_rec"
-PADDLE_ENABLE_STRUCTURE = os.environ.get("PADDLE_ENABLE_STRUCTURE", "true").lower() in {
+# When enabled, PP-Structure runs only after successful Paddle OCR. It never
+# runs for Tesseract results or after an automatic Paddle failure.
+PADDLE_ENABLE_STRUCTURE = os.environ.get("PADDLE_ENABLE_STRUCTURE", "false").lower() in {
     "1",
     "true",
     "yes",

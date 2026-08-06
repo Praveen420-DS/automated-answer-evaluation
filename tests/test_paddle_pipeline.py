@@ -4,14 +4,15 @@ from types import SimpleNamespace
 
 import cv2
 import numpy as np
+import pytest
 from fastapi.testclient import TestClient
 from reportlab.pdfgen import canvas
 
 from app.evaluation.deterministic_evaluator import evaluate_answers
 from app.feedback.feedback_generator import generate_feedback
 from app.main import app
-from app.core.config import RUNTIME_HOME, configure_runtime_environment
-from app.ocr.extractor import extract_document
+from app.core.config import RUNTIME_HOME, configure_runtime_environment, validate_ocr_engine
+from app.ocr.extractor import extract_document, reset_paddle_circuit_breaker
 from app.ocr.input_handler import input_to_images
 from app.ocr.models import OCRPage, OCRResult
 from app.ocr.paddle_ocr import get_paddle_ocr_engine
@@ -21,6 +22,20 @@ from app.parser.answer_parser import parse_ocr_result
 
 
 SAMPLE_IMAGE = Path("tests/samples/Closest10.JPEG")
+COMMON_METADATA_KEYS = {
+    "engine",
+    "model",
+    "fallback",
+    "fallback_reason",
+    "structure_enabled",
+}
+
+
+@pytest.fixture(autouse=True)
+def reset_paddle_circuit():
+    reset_paddle_circuit_breaker()
+    yield
+    reset_paddle_circuit_breaker()
 
 
 def test_paddleocr_import_and_version():
@@ -69,8 +84,14 @@ def test_paddleocr_image_ocr_schema():
     result = extract_document(SAMPLE_IMAGE)
 
     assert isinstance(result, OCRResult)
-    assert result.metadata["engine"] == "PaddleOCR"
-    assert result.metadata["model"] == "PP-OCRv5"
+    assert COMMON_METADATA_KEYS <= result.metadata.keys()
+    assert result.metadata["engine"] in {"PaddleOCR", "Tesseract"}
+    if result.metadata["engine"] == "PaddleOCR":
+        assert result.metadata["model"] == "PP-OCRv5"
+        assert result.metadata["fallback"] is False
+    else:
+        assert result.metadata["fallback"] is True
+        assert result.metadata["fallback_reason"]
     assert len(result.pages) == 1
     assert isinstance(result.full_text, str)
 
@@ -153,6 +174,9 @@ def test_paddle_wrapper_uses_preprocessed_image_and_normalizes_all_results(
     assert [block.text for block in result.pages[0].blocks] == ["first", "second"]
     assert result.pages[0].blocks[1].order == 1
     assert result.pages[1].blocks[0].bbox == [4.0, 4.0, 5.0, 5.0]
+    assert COMMON_METADATA_KEYS <= result.metadata.keys()
+    assert result.metadata["fallback"] is False
+    assert result.metadata["fallback_reason"] is None
 
 
 def test_pp_structure_normalizes_layout_regions_and_tables():
@@ -248,6 +272,7 @@ def test_extractor_attaches_structure_without_replacing_ocr_blocks(
         metadata={"model": "PP-StructureV3"},
     )
     monkeypatch.setattr(extractor, "PADDLE_ENABLE_STRUCTURE", True)
+    monkeypatch.setattr(extractor, "OCR_ENGINE", "paddle")
     monkeypatch.setattr(extractor, "extract_text_with_paddle", lambda *args, **kwargs: ocr_result)
     monkeypatch.setattr(extractor, "analyze_structure", lambda paths: structure_result)
 
@@ -279,6 +304,7 @@ def test_multi_page_pdf_reaches_ocr_pipeline(tmp_path, monkeypatch):
 
     monkeypatch.setattr(extractor, "extract_text_with_paddle", fake_extract)
     monkeypatch.setattr(extractor, "PADDLE_ENABLE_STRUCTURE", False)
+    monkeypatch.setattr(extractor, "OCR_ENGINE", "paddle")
     extractor.extract_document(pdf_path, preprocess=True)
 
     assert len(captured["paths"]) == 2
@@ -339,3 +365,199 @@ def test_api_rejects_invalid_file():
     )
 
     assert response.status_code == 400
+
+
+def _image_file(tmp_path, name="answer.png"):
+    image_path = tmp_path / name
+    assert cv2.imwrite(str(image_path), np.full((40, 80, 3), 255, dtype=np.uint8))
+    return image_path
+
+
+def test_automatic_fallback_metadata_is_safe(tmp_path, monkeypatch):
+    from app.ocr import extractor, legacy_tesseract
+
+    image_path = _image_file(tmp_path)
+    secret = "super-secret-token"
+    monkeypatch.setattr(extractor, "OCR_ENGINE", "auto")
+    monkeypatch.setattr(extractor, "PADDLE_ENABLE_STRUCTURE", True)
+    monkeypatch.setattr(
+        extractor,
+        "extract_text_with_paddle",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError(secret)),
+    )
+    monkeypatch.setattr(legacy_tesseract.pytesseract, "image_to_string", lambda *a, **k: "fallback")
+
+    result = extractor.extract_document(image_path)
+
+    assert COMMON_METADATA_KEYS <= result.metadata.keys()
+    assert result.metadata["engine"] == "Tesseract"
+    assert result.metadata["fallback"] is True
+    assert result.metadata["fallback_reason"] == "PaddleOCR failed with RuntimeError"
+    assert secret not in result.metadata["fallback_reason"]
+    assert "Traceback" not in result.metadata["fallback_reason"]
+    assert result.metadata["structure_enabled"] is False
+
+
+def test_forced_tesseract_skips_paddle(tmp_path, monkeypatch):
+    from app.ocr import extractor, legacy_tesseract
+
+    image_path = _image_file(tmp_path)
+    monkeypatch.setattr(extractor, "OCR_ENGINE", "tesseract")
+    monkeypatch.setattr(
+        extractor,
+        "extract_text_with_paddle",
+        lambda *args, **kwargs: pytest.fail("Paddle should not run"),
+    )
+    monkeypatch.setattr(legacy_tesseract.pytesseract, "image_to_string", lambda *a, **k: "forced")
+
+    result = extractor.extract_document(image_path)
+
+    assert result.metadata["engine"] == "Tesseract"
+    assert result.metadata["fallback"] is False
+    assert result.metadata["fallback_reason"] is None
+
+
+def test_forced_paddle_propagates_failure(tmp_path, monkeypatch):
+    from app.ocr import extractor
+
+    monkeypatch.setattr(extractor, "OCR_ENGINE", "paddle")
+    monkeypatch.setattr(
+        extractor,
+        "extract_text_with_paddle",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("paddle broke")),
+    )
+    monkeypatch.setattr(
+        extractor,
+        "extract_text_with_tesseract",
+        lambda *args, **kwargs: pytest.fail("Tesseract should not run"),
+    )
+
+    with pytest.raises(RuntimeError, match="paddle broke"):
+        extractor.extract_document(_image_file(tmp_path))
+
+
+def test_circuit_breaker_skips_paddle_after_failure(tmp_path, monkeypatch):
+    from app.ocr import extractor, legacy_tesseract
+
+    attempts = 0
+
+    def fail_paddle(*args, **kwargs):
+        nonlocal attempts
+        attempts += 1
+        raise RuntimeError("broken")
+
+    monkeypatch.setattr(extractor, "OCR_ENGINE", "auto")
+    monkeypatch.setattr(extractor, "extract_text_with_paddle", fail_paddle)
+    monkeypatch.setattr(legacy_tesseract.pytesseract, "image_to_string", lambda *a, **k: "fallback")
+    image_path = _image_file(tmp_path)
+
+    first = extractor.extract_document(image_path)
+    second = extractor.extract_document(image_path)
+
+    assert attempts == 1
+    assert first.metadata["fallback"] is True
+    assert "RuntimeError" in first.metadata["fallback_reason"]
+    assert "circuit breaker is open" in second.metadata["fallback_reason"]
+
+
+def test_tesseract_preserves_multiple_pages_and_preprocesses(tmp_path, monkeypatch):
+    from app.ocr import legacy_tesseract
+
+    image_paths = [_image_file(tmp_path, "one.png"), _image_file(tmp_path, "two.png")]
+    observed_images = []
+
+    def fake_tesseract(image, config):
+        observed_images.append(image)
+        return f"page {len(observed_images)}"
+
+    monkeypatch.setattr(legacy_tesseract.pytesseract, "image_to_string", fake_tesseract)
+    result = legacy_tesseract.extract_text_with_tesseract(
+        image_paths,
+        preprocess=True,
+        workspace=tmp_path,
+    )
+
+    assert [page.page_number for page in result.pages] == [1, 2]
+    assert [page.text for page in result.pages] == ["page 1", "page 2"]
+    assert result.full_text == "page 1\n\npage 2"
+    assert result.metadata["preprocessing"] is True
+    assert result.metadata["model"] == "Tesseract (--oem 3 --psm 11)"
+    assert "workspace" not in result.metadata
+
+
+def test_tesseract_unreadable_image_uses_filename_only(tmp_path, monkeypatch):
+    from app.ocr import legacy_tesseract
+
+    image_path = tmp_path / "unreadable.png"
+    image_path.write_bytes(b"not an image")
+
+    with pytest.raises(ValueError, match=r"^Unreadable image: unreadable\.png$") as error:
+        legacy_tesseract.extract_text_with_tesseract([image_path])
+
+    assert str(image_path.parent) not in str(error.value)
+
+
+def test_invalid_ocr_engine_is_rejected():
+    with pytest.raises(ValueError, match="Unsupported OCR_ENGINE"):
+        validate_ocr_engine("unknown")
+
+
+def test_structure_is_skipped_after_fallback(tmp_path, monkeypatch):
+    from app.ocr import extractor, legacy_tesseract
+
+    monkeypatch.setattr(extractor, "OCR_ENGINE", "auto")
+    monkeypatch.setattr(extractor, "PADDLE_ENABLE_STRUCTURE", True)
+    monkeypatch.setattr(
+        extractor,
+        "extract_text_with_paddle",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("broken")),
+    )
+    monkeypatch.setattr(
+        extractor,
+        "analyze_structure",
+        lambda *args, **kwargs: pytest.fail("Structure should not run after fallback"),
+    )
+    monkeypatch.setattr(legacy_tesseract.pytesseract, "image_to_string", lambda *a, **k: "fallback")
+
+    result = extractor.extract_document(_image_file(tmp_path))
+
+    assert result.metadata["engine"] == "Tesseract"
+    assert result.metadata["structure_enabled"] is False
+
+
+def test_structure_failure_metadata_is_sanitized(tmp_path, monkeypatch):
+    from app.ocr import extractor
+
+    raw_message = "credential=secret at C:\\private\\answer.png"
+    paddle_result = OCRResult(
+        pages=[OCRPage(page_number=1, text="OCR text")],
+        full_text="OCR text",
+        metadata={
+            "engine": "PaddleOCR",
+            "model": "PP-OCRv5",
+            "fallback": False,
+            "fallback_reason": None,
+            "structure_enabled": False,
+        },
+    )
+    monkeypatch.setattr(extractor, "OCR_ENGINE", "paddle")
+    monkeypatch.setattr(extractor, "PADDLE_ENABLE_STRUCTURE", True)
+    monkeypatch.setattr(
+        extractor,
+        "extract_text_with_paddle",
+        lambda *args, **kwargs: paddle_result,
+    )
+    monkeypatch.setattr(
+        extractor,
+        "analyze_structure",
+        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError(raw_message)),
+    )
+
+    result = extractor.extract_document(_image_file(tmp_path))
+
+    assert result.metadata["structure_warning"] == "PP-Structure failed with RuntimeError"
+    assert raw_message not in result.metadata["structure_warning"]
+    assert "secret" not in result.metadata["structure_warning"]
+    assert "Traceback" not in result.metadata["structure_warning"]
+    assert result.metadata["structure_enabled"] is False
+    assert result.metadata["structure_available"] is False
