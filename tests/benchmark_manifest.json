@@ -1,0 +1,11 @@
+{
+  "samples": [
+    {"id": "closest-10", "image_path": "tests/samples/Closest10.JPEG", "ground_truth_path": "tests/expected/Closest10.txt", "language": "en", "source": "public benchmark", "ground_truth_verified": false},
+    {"id": "closest-12", "image_path": "tests/samples/Closest12.JPEG", "ground_truth_path": "tests/expected/Closest12.txt", "language": "en", "source": "public benchmark", "ground_truth_verified": false},
+    {"id": "closest-13", "image_path": "tests/samples/Closest13.JPEG", "ground_truth_path": "tests/expected/Closest13.txt", "language": "en", "source": "public benchmark", "ground_truth_verified": false},
+    {"id": "listman-2", "image_path": "tests/samples/Listman2.JPEG", "ground_truth_path": "tests/expected/Listman2.txt", "language": "en", "source": "public benchmark", "ground_truth_verified": false},
+    {"id": "listman-15", "image_path": "tests/samples/Listman15.JPEG", "ground_truth_path": "tests/expected/Listman15.txt", "language": "en", "source": "public benchmark", "ground_truth_verified": false},
+    {"id": "listman-16", "image_path": "tests/samples/Listman16.JPEG", "ground_truth_path": "tests/expected/Listman16.txt", "language": "en", "source": "public benchmark", "ground_truth_verified": false},
+    {"id": "listman-17", "image_path": "tests/samples/Listman17.JPEG", "ground_truth_path": "tests/expected/Listman17.txt", "language": "en", "source": "public benchmark", "ground_truth_verified": false}
+  ]
+}

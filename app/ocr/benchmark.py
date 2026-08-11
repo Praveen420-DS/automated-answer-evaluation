@@ -15,6 +15,7 @@ import cv2
 from app.ocr.extractor import extract_document
 from app.ocr.paddle_ocr import extract_text_with_paddle
 from app.ocr.preprocessing import preprocess_image
+from app.ocr.benchmark_metrics import calculate_ocr_metrics
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -93,6 +94,8 @@ def _confidence_statistics(blocks: list[Any]) -> dict[str, float | None]:
 def _result_metrics(expected: str, result: Any) -> dict[str, Any]:
     blocks = [block for page in result.pages for block in page.blocks]
     return {
+        **calculate_ocr_metrics(expected, result.full_text),
+        "legacy_metrics": similarity_metrics(expected, result.full_text),
         **similarity_metrics(expected, result.full_text),
         **_confidence_statistics(blocks),
         "ocr_block_count": len(blocks),
@@ -252,6 +255,11 @@ def run_preprocessing_ablation(
         reverse=True,
     )
     report = {
+        "metric_labels": {
+            "character_similarity": "legacy",
+            "token_similarity": "legacy",
+            "overall_similarity": "legacy",
+        },
         "pipeline": {
             "ocr_model": "PP-OCRv5_server_det + PP-OCRv5_server_rec",
             "device": "cpu",
@@ -313,6 +321,11 @@ def run_benchmark(report_path: Path = REPORT_PATH) -> dict[str, Any]:
     baseline_average = _average(baseline_rows, metric_keys)
 
     report = {
+        "metric_labels": {
+            "character_similarity": "legacy",
+            "token_similarity": "legacy",
+            "overall_similarity": "legacy",
+        },
         "pipeline": {
             "ocr_model": "PP-OCRv5_server_det + PP-OCRv5_server_rec",
             "structure_model": "PP-StructureV3 / PP-DocLayout_plus-L",
